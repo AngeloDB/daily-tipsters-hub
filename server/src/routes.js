@@ -25,7 +25,7 @@ function formatDateToItalyNoTZ(dateInput) {
   if (dateStr.includes('T') && dateStr.endsWith('Z')) {
     const date = new Date(dateStr);
     date.setHours(date.getHours() - TIMEZONE_DISPLAY_OFFSET_HOURS);
-    return date.toISOString(); // Keep 'Z' so browser converts to local
+    return date.toISOString().replace('Z', ''); // Remove 'Z' so browser treats it as local time
   }
   
   // If it's DB format "YYYY-MM-DD HH:MM:SS"
@@ -33,7 +33,7 @@ function formatDateToItalyNoTZ(dateInput) {
     const isoStr = dateStr.replace(' ', 'T') + 'Z';
     const date = new Date(isoStr);
     date.setHours(date.getHours() - TIMEZONE_DISPLAY_OFFSET_HOURS);
-    return date.toISOString(); // Keep 'Z'
+    return date.toISOString().replace('Z', ''); // Remove 'Z'
   }
   
   return dateStr;
