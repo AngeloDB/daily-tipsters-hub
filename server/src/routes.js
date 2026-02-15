@@ -5,8 +5,9 @@ import { authMiddleware, loginUser, getCurrentUser, verifyToken } from './auth.j
 const router = express.Router();
 
 // ============ TIMEZONE OFFSET - Subtract from all match times ============
-// Matches are stored with +1 hour correction in DB. Subtract here for display.
-const TIMEZONE_DISPLAY_OFFSET_HOURS = 1;
+// Set to 0 if DB values are already in Italian time (UTC+1)
+// We remove 'Z' to prevent the browser from applying its own offset.
+const TIMEZONE_DISPLAY_OFFSET_HOURS = 0;
 
 /**
  * Helper: format DB date and apply timezone offset
