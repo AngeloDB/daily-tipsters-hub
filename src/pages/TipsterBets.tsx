@@ -121,18 +121,19 @@ export default function TipsterBetsPage() {
     const balance = tipster?.balance || 0;
     const isAdvisor = balance >= 10000;
     
-    let text = t('tipster.share_text', { name: tipster?.displayName });
-    if (isAdvisor) {
-      text = `🔥 Segui i pronostici di ${tipster?.displayName}, Advisor Certificato su Tipsters Race! 🏆\nSaldo attuale: GP ${balance.toLocaleString()}`;
-    } else {
-      text = `⚽ Guarda le schedine di ${tipster?.displayName} su Tipsters Race! Saldo: GP ${balance.toLocaleString()}`;
-    }
+    const shareText = isAdvisor 
+      ? `🔥 Segui i pronostici di ${tipster?.displayName}, Advisor Certificato su Tipsters Race! 🏆\nSaldo attuale: GP ${balance.toLocaleString()}`
+      : `⚽ Guarda le schedine di ${tipster?.displayName} su Tipsters Race! Saldo: GP ${balance.toLocaleString()}`;
     
-    const shareUrl = isProd ? `https://getprono.online/api/share/tipster/${id}` : url;
+    // FORZIAMO l'URL del proxy per Facebook se non siamo in localhost
+    const shareUrl = window.location.hostname === 'localhost' 
+      ? url 
+      : `https://getprono.online/api/share/tipster/${id}`;
     
     if (platform === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`, '_blank');
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + "\n" + url)}`, '_blank');
     } else if (platform === 'facebook') {
+      // Facebook DEVE ricevere l'URL del proxy per leggere i meta tags
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
     } else if (platform === 'copy') {
       navigator.clipboard.writeText(url);
