@@ -4,6 +4,41 @@ import { authMiddleware, loginUser, getCurrentUser, verifyToken } from './auth.j
 
 const router = express.Router();
 
+// ============ TIMEZONE OFFSET - Subtract from all match times ============
+// Matches are stored with +1 hour correction in DB. Subtract here for display.
+const TIMEZONE_DISPLAY_OFFSET_HOURS = 1;
+
+/**
+ * Helper: format DB date and apply timezone offset
+ * Removes 'Z' to ensure browser treats it as local time
+ */
+function formatDateToItalyNoTZ(dateInput) {
+  if (!dateInput) return null;
+  let dateStr = String(dateInput);
+  
+  // If it's a Date object, convert to ISO first
+  if (dateInput instanceof Date) {
+    dateStr = dateInput.toISOString();
+  }
+
+  // If it's in ISO format with Z
+  if (dateStr.includes('T') && dateStr.endsWith('Z')) {
+    const date = new Date(dateStr);
+    date.setHours(date.getHours() - TIMEZONE_DISPLAY_OFFSET_HOURS);
+    return date.toISOString(); // Keep 'Z' so browser converts to local
+  }
+  
+  // If it's DB format "YYYY-MM-DD HH:MM:SS"
+  if (dateStr.includes(' ') && !dateStr.includes('T')) {
+    const isoStr = dateStr.replace(' ', 'T') + 'Z';
+    const date = new Date(isoStr);
+    date.setHours(date.getHours() - TIMEZONE_DISPLAY_OFFSET_HOURS);
+    return date.toISOString(); // Keep 'Z'
+  }
+  
+  return dateStr;
+}
+
 /**
  * Normalize odds from raw market/selection format to frontend keys
  * Maps market/selection to: 1, X, 2, 1X, X2, 12, GG, NG, U, O
@@ -138,6 +173,7 @@ router.get('/matches', async (req, res) => {
       const rawOdds = oddsMap[String(m.fixture_id)] || {};
       return {
         ...m,
+        fixture_date: formatDateToItalyNoTZ(m.fixture_date),
         priority: m.current_priority,
         normalized_odds: normalizeOdds(rawOdds)
       };
@@ -392,6 +428,7 @@ router.get('/matches/date/:date', async (req, res) => {
       const rawOdds = oddsMap[String(m.fixture_id)] || {};
       return {
         ...m,
+        fixture_date: formatDateToItalyNoTZ(m.fixture_date),
         priority: m.current_priority,
         normalized_odds: normalizeOdds(rawOdds)
       };
@@ -704,7 +741,8 @@ router.get('/bets/:id/public-matches', async (req, res) => {
 
     const now = new Date();
     const data = items.map(item => {
-      const matchDate = new Date(item.fixture_date);
+      const matchDateStr = formatDateToItalyNoTZ(item.fixture_date);
+      const matchDate = new Date(matchDateStr);
       const isExpired = matchDate < now || item.status !== 'NS';
 
       return {
@@ -713,7 +751,7 @@ router.get('/bets/:id/public-matches', async (req, res) => {
         odd: item.odd,
         home_team: item.home_team,
         away_team: item.away_team,
-        match_date: item.fixture_date,
+        match_date: matchDateStr,
         isExpired
       };
     });
