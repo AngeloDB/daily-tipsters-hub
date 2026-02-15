@@ -756,25 +756,30 @@ router.get('/share/tipster/:id', async (req, res) => {
     const description = `Saldo attuale: GP ${balance.toLocaleString()} | Unisciti alla Tipsters Race e segui le migliori schedine!`;
     const redirectUrl = `https://getprono.online/tipsters/${tipsterId}`;
     
-    // Immagine di fallback (dovrebbe essere un'immagine statica caricata sul server)
-    const imageUrl = "https://getprono.online/images/stadium-background-CENrFUxH.jpg";
+    // Proviamo con il LOGO che è più leggero e viene letto meglio da Facebook inizialmente
+    const imageUrl = "https://getprono.online/images/logo-CvVUroNE.png";
 
     res.send(`
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="UTF-8">
           <title>${title}</title>
           <meta property="og:title" content="${title}" />
           <meta property="og:description" content="${description}" />
-          <meta property="og:url" content="${redirectUrl}" />
-          <meta property="og:type" content="website" />
+          <meta property="og:url" content="https://getprono.online/api/share/tipster/${tipsterId}" />
+          <meta property="og:type" content="article" />
           <meta property="og:site_name" content="Tipsters Race" />
           <meta property="og:image" content="${imageUrl}" />
-          <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="630" />
-          <meta name="twitter:card" content="summary_large_image" />
+          <meta property="og:image:secure_url" content="${imageUrl}" />
+          <meta property="og:image:type" content="image/png" />
+          <meta property="og:image:width" content="600" />
+          <meta property="og:image:height" content="600" />
+          <meta name="twitter:card" content="summary" />
+          <meta name="twitter:title" content="${title}" />
+          <meta name="twitter:description" content="${description}" />
           <meta name="twitter:image" content="${imageUrl}" />
-          <meta http-equiv="refresh" content="0; url=${redirectUrl}" />
+          <meta http-equiv="refresh" content="2; url=${redirectUrl}" />
         </head>
         <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
           <div style="text-align: center;">
