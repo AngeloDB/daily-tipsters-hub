@@ -1,0 +1,17 @@
+FROM node:20-alpine
+
+WORKDIR /app/server
+
+# Install dependencies
+COPY server/package.json ./
+RUN npm install
+
+# Copy source
+COPY server/src ./src
+COPY server/migrations ./migrations
+COPY server/package.json ./
+
+# Expose port (default 4001)
+EXPOSE 4001
+
+CMD ["npm", "start"]
