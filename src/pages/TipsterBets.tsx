@@ -116,13 +116,24 @@ export default function TipsterBetsPage() {
   }, [id]);
 
   const handleShare = (platform: 'whatsapp' | 'facebook' | 'copy') => {
+    const isProd = window.location.hostname !== 'localhost';
     const url = window.location.href;
-    const text = t('tipster.share_text', { name: tipster?.displayName });
+    const balance = tipster?.balance || 0;
+    const isAdvisor = balance >= 10000;
+    
+    let text = t('tipster.share_text', { name: tipster?.displayName });
+    if (isAdvisor) {
+      text = `🔥 Segui i pronostici di ${tipster?.displayName}, Advisor Certificato su Tipsters Race! 🏆\nSaldo attuale: GP ${balance.toLocaleString()}`;
+    } else {
+      text = `⚽ Guarda le schedine di ${tipster?.displayName} su Tipsters Race! Saldo: GP ${balance.toLocaleString()}`;
+    }
+    
+    const shareUrl = isProd ? `https://getprono.online/api/share/tipster/${id}` : url;
     
     if (platform === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
+      window.open(`https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`, '_blank');
     } else if (platform === 'facebook') {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
     } else if (platform === 'copy') {
       navigator.clipboard.writeText(url);
       toast.success(t('tipster.link_copied'));

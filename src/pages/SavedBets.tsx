@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { useSavedBets, type SavedBet } from "@/contexts/SavedBetsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Trash2, ArrowLeft, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FaWhatsapp, FaFacebookF } from "react-icons/fa";
@@ -10,15 +11,24 @@ import { format } from "date-fns";
 import { getDateLocale } from "@/lib/i18n";
 
 function buildShareText(bet: SavedBet, t: any) {
+  const isProd = window.location.hostname !== 'localhost';
+  const baseUrl = isProd ? 'https://getprono.online' : 'http://localhost:8081';
+  
   const lines = bet.selections.map(
-    (s) => `${s.homeTeam} vs ${s.awayTeam} | ${s.market}: ${s.selection} @${s.odd.toFixed(2)}`
+    (s) => `• ${s.homeTeam} vs ${s.awayTeam} (${s.market}: ${s.selection} @${s.odd.toFixed(2)})`
   );
-  return `${t('saved_bets.share')}!\n${lines.join("\n")}\n\n${t('betslip.total_odds')}: ${bet.totalOdds.toFixed(2)} | ${t('betslip.stake')}: GP ${bet.stake.toFixed(0)} | ${t('betslip.potential_win')}: GP ${bet.potentialWin.toFixed(0)}`;
+  
+  return `${t('saved_bets.share')}!\n\n${lines.join("\n")}\n\n${t('betslip.total_odds')}: ${bet.totalOdds.toFixed(2)}\n${t('betslip.stake')}: GP ${bet.stake.toFixed(0)}\n${t('betslip.potential_win')}: GP ${bet.potentialWin.toFixed(0)}`;
 }
 
 export default function SavedBetsPage() {
   const { savedBets, deleteBet, refreshBets, isLoading } = useSavedBets();
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
+
+  const isProd = window.location.hostname !== 'localhost';
+  const baseUrl = isProd ? 'https://getprono.online' : 'http://localhost:8081';
+  const userProfileUrl = user?.id ? `${baseUrl}/tipsters/${user.id}` : baseUrl;
 
   useEffect(() => {
     // Auto refresh every 2 minutes
@@ -27,6 +37,12 @@ export default function SavedBetsPage() {
     }, 120000);
     return () => clearInterval(interval);
   }, [refreshBets]);
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm(t('saved_bets.delete_confirm'))) {
+      await deleteBet(id);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -67,9 +83,15 @@ export default function SavedBetsPage() {
   );
 }
 
-function BetCard({ bet, onDelete }: { bet: SavedBet; onDelete: (id: string) => void }) {
+function BetCard({ bet, onDelete }: { bet: SavedBet; onDelete: (id: any) => void }) {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const date = new Date(bet.createdAt);
+
+  const isProd = window.location.hostname !== 'localhost';
+  const baseUrl = isProd ? 'https://getprono.online' : 'http://localhost:8081';
+  const userProfileUrl = user?.id ? `${baseUrl}/tipsters/${user.id}` : baseUrl;
+  const shareRedirectUrl = (isProd && user?.id) ? `https://getprono.online/api/share/tipster/${user.id}` : userProfileUrl;
 
   const statusColors = {
     LIVE: "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -105,7 +127,7 @@ function BetCard({ bet, onDelete }: { bet: SavedBet; onDelete: (id: string) => v
         </div>
         <div className="flex items-center gap-1">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(buildShareText(bet, t))}`}
+            href={`https://wa.me/?text=${encodeURIComponent(buildShareText(bet, t) + "\n\n" + userProfileUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-full p-1.5 text-muted-foreground hover:bg-[#25D366]/15 hover:text-[#25D366]"
@@ -114,7 +136,7 @@ function BetCard({ bet, onDelete }: { bet: SavedBet; onDelete: (id: string) => v
             <FaWhatsapp className="h-4 w-4" />
           </a>
           <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://tipstersrace.com")}&quote=${encodeURIComponent(buildShareText(bet, t))}`}
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareRedirectUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-full p-1.5 text-muted-foreground hover:bg-[#1877F2]/15 hover:text-[#1877F2]"

@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { Betslip } from "@/components/Betslip";
+import { Link } from "react-router-dom";
 import { Trophy, Target, Users, Star, Rocket, BadgeDollarSign, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -105,14 +106,12 @@ export default function Regolamento() {
 
         {/* CTA */}
         <section className="text-center space-y-4 pb-8">
-          <a
-            href="https://tipstersrace.com/register"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/"
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {t('nav.register')} <ArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
         </section>
       </main>
     </div>

@@ -726,4 +726,63 @@ router.get('/bets/:id/public-matches', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/share/tipster/:id
+ * Serves a meta-tag enriched page for social sharing bots
+ */
+router.get('/share/tipster/:id', async (req, res) => {
+  let conn;
+  try {
+    conn = await getConnection();
+    const tipsterId = req.params.id;
+
+    const [rows] = await conn.execute(`
+      SELECT u.id, u.email as display_name, COALESCE(b.balance, 0) as balance
+      FROM wp_users u
+      LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
+      WHERE u.id = ?
+    `, [tipsterId]);
+
+    if (rows.length === 0) {
+      return res.redirect('https://getprono.online/tipsters');
+    }
+
+    const tipster = rows[0];
+    const name = tipster.display_name ? tipster.display_name.split('@')[0] : 'Tipster';
+    const balance = Math.floor(tipster.balance);
+    const title = `Pronostici di ${name} - Tipsters Race`;
+    const description = `Guarda le schedine di ${name} su Tipsters Race! Saldo attuale: GP ${balance.toLocaleString()}. Segui i migliori esperti di scommesse.`;
+    const redirectUrl = `https://getprono.online/tipsters/${tipsterId}`;
+
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title}</title>
+          <meta property="og:title" content="${title}" />
+          <meta property="og:description" content="${description}" />
+          <meta property="og:url" content="${redirectUrl}" />
+          <meta property="og:type" content="website" />
+          <meta property="og:site_name" content="Tipsters Race" />
+          <meta property="og:image" content="https://getprono.online/hero-bg.jpg" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta http-equiv="refresh" content="0; url=${redirectUrl}" />
+        </head>
+        <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
+          <div style="text-align: center;">
+            <h1 style="color: #3b82f6;">Redirecting to Tipsters Race...</h1>
+            <p>Se non vieni reindirizzato entro pochi secondi, <a href="${redirectUrl}" style="color: #60a5fa;">clicca qui</a>.</p>
+          </div>
+          <script>window.location.href = "${redirectUrl}";</script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('[SHARE] Error:', error);
+    res.redirect('https://getprono.online');
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 export default router;

@@ -27,8 +27,8 @@ services:
     depends_on:
       - tipsters-backend
     networks:
-      - daily-match-hub_app-network
+      - daily-match-hub-prod_app-network
 
 networks:
-  daily-match-hub_app-network:
+  daily-match-hub-prod_app-network:
     external: true
