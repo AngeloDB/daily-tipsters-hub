@@ -490,21 +490,25 @@ router.get('/tipsters', async (req, res) => {
     const [rows] = await conn.execute(`
       SELECT 
           u.id, 
-          COALESCE(u.display_name, u.email) as name_raw,
+          u.display_name,
           u.email,
           COALESCE(b.balance, 0) as balance,
           (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) as total_bets
       FROM wp_users u
       LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
       WHERE (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) > 0
-         OR COALESCE(b.balance, 0) > 0
+         OR COALESCE(b.balance, 0) >= 0
       ORDER BY balance DESC, total_bets DESC
+      LIMIT 100
     `);
 
     const data = rows.map(r => {
-      const name = r.name_raw && r.name_raw.trim() !== '' 
-        ? r.name_raw 
-        : (r.email ? r.email.split('@')[0] : 'Tipster');
+      let name = 'Tipster';
+      if (r.display_name && r.display_name.trim() !== '') {
+        name = r.display_name;
+      } else if (r.email) {
+        name = r.email.split('@')[0];
+      }
       
       return {
         id: r.id,
