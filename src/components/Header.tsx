@@ -63,7 +63,13 @@ export function Header() {
             </Link>
             {user && (
               <Link to="/wallet" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold bg-primary/10 text-primary transition-all hover:bg-primary/20 rounded-xl px-3 border border-primary/20">
-                <WalletIcon className="h-4 w-4" /> {t('nav.wallet')}
+                <WalletIcon className="h-4 w-4" /> 
+                {t('nav.wallet')}
+                {user.advisorBalance !== undefined && Number(user.advisorBalance) > 0 && (
+                  <span className="ml-1 bg-primary text-primary-foreground px-1.5 py-0.5 rounded-md text-[10px] font-black">
+                    € {Number(user.advisorBalance).toFixed(2)}
+                  </span>
+                )}
               </Link>
             )}
           </div>
