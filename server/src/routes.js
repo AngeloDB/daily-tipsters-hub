@@ -952,18 +952,20 @@ router.post('/bets/:id/unlock', authMiddleware, async (req, res) => {
       [buyerId, betId, euroPrice]
     );
 
-    // 5. Increment Advisor wallet
+    // 5. Increment Advisor wallet (50% revenue share)
+    const revenueAmount = euroPrice * 0.50;
+    
     // First ensure wallet exists
     await conn.execute(`
       INSERT INTO tp_advisor_wallets (user_id, balance_euro) 
       VALUES (?, ?) 
       ON DUPLICATE KEY UPDATE balance_euro = balance_euro + ?
-    `, [advisorId, euroPrice, euroPrice]);
+    `, [advisorId, revenueAmount, revenueAmount]);
 
     // 6. Record transaction for advisor
     await conn.execute(
       'INSERT INTO tp_transactions (user_id, amount, type, status) VALUES (?, ?, "sale", "completed")',
-      [advisorId, euroPrice]
+      [advisorId, revenueAmount]
     );
 
     await conn.commit();

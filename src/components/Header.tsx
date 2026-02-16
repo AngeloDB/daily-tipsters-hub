@@ -91,11 +91,6 @@ export function Header() {
               
               <div className="flex items-center gap-2 px-3 border-r border-border/50">
                 <span className="text-xs font-black text-primary">GP: {user.gpBalance ?? 0}</span>
-                {user.advisorBalance !== undefined && user.advisorBalance > 0 && (
-                  <span className="text-xs font-black text-green-500 ml-1">
-                    € {Number(user.advisorBalance).toFixed(2)}
-                  </span>
-                )}
               </div>
 
               <button 
