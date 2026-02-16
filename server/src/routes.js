@@ -490,7 +490,6 @@ router.get('/tipsters', async (req, res) => {
     const [rows] = await conn.execute(`
       SELECT 
           u.id, 
-          u.display_name,
           u.email,
           COALESCE(b.balance, 0) as balance,
           (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) as total_bets
@@ -501,12 +500,8 @@ router.get('/tipsters', async (req, res) => {
     `);
 
     const data = rows.map(r => {
-      let name = 'Tipster';
-      if (r.display_name && r.display_name.trim() !== '') {
-        name = r.display_name;
-      } else if (r.email) {
-        name = r.email.split('@')[0];
-      }
+      // Use email as display name (truncate it)
+      const name = r.email ? r.email.split('@')[0] : 'Tipster';
       
       return {
         id: r.id,
