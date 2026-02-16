@@ -851,6 +851,9 @@ router.post('/paypal/capture-order', authMiddleware, async (req, res) => {
 
         const bet = betRows[0];
         const advisorId = bet.user_id;
+        
+        // Calculate the 50% revenue for the advisor
+        const revenueAmount = paidAmount * 0.50;
 
         // 2. Record lock
         await conn.execute(
@@ -863,12 +866,12 @@ router.post('/paypal/capture-order', authMiddleware, async (req, res) => {
           INSERT INTO tp_advisor_wallets (user_id, balance_euro) 
           VALUES (?, ?) 
           ON DUPLICATE KEY UPDATE balance_euro = balance_euro + ?
-        `, [advisorId, paidAmount, paidAmount]);
+        `, [advisorId, revenueAmount, revenueAmount]);
 
         // 4. Record transaction for advisor
         await conn.execute(
           'INSERT INTO tp_transactions (user_id, amount, type, status, payment_email) VALUES (?, ?, "sale", "completed", ?)',
-          [advisorId, paidAmount, payerEmail]
+          [advisorId, revenueAmount, payerEmail]
         );
 
         await conn.commit();
