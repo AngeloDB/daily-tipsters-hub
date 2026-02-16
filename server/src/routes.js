@@ -1185,9 +1185,23 @@ router.get('/admin/financial-stats', adminMiddleware, async (req, res) => {
 
     res.json({
       success: true,
-      summary: totals[0],
-      advisors: advisorStats,
-      transactions: transactions
+      summary: {
+        total_gross: Number(totals[0].total_gross || 0),
+        total_advisor_balance: Number(totals[0].total_advisor_balance || 0),
+        total_advisor_earned: Number(totals[0].total_advisor_earned || 0),
+        total_withdrawn: Number(totals[0].total_withdrawn || 0)
+      },
+      advisors: advisorStats.map(a => ({
+        ...a,
+        total_sales_count: Number(a.total_sales_count || 0),
+        gross_revenue: Number(a.gross_revenue || 0),
+        expected_advisor_share: Number(a.expected_advisor_share || 0),
+        current_wallet_balance: Number(a.current_wallet_balance || 0)
+      })),
+      transactions: transactions.map(t => ({
+        ...t,
+        advisor_amount: Number(t.advisor_amount || 0)
+      }))
     });
   } catch (error) {
     console.error('[ADMIN STATS] Error:', error);
