@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BetMatch {
   home_team: string;
@@ -41,6 +42,7 @@ interface TipsterInfo {
 
 export default function TipsterBetsPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const [bets, setBets] = useState<Bet[]>([]);
   const [tipster, setTipster] = useState<TipsterInfo | null>(null);
@@ -76,29 +78,52 @@ export default function TipsterBetsPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('tipster_auth_token') || localStorage.getItem('token');
+    
     // Fetch Tipster Public Bets
     fetch(`/api/tipsters/${id}/public-bets`, {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Server error " + res.status);
+        return res.json();
+      })
       .then((data) => {
         if (data.success) {
-          const betsWithMatches = data.data.map(async (bet: Bet) => {
-            const res = await fetch(`/api/bets/${bet.id}/public-matches`);
-            const mData = await res.json();
-            return { ...bet, matches: mData.data };
+          const rawBets = data.data || [];
+          
+          const betsWithMatches = rawBets.map(async (bet: any) => {
+            try {
+              const res = await fetch(`/api/bets/${bet.id}/public-matches`);
+              if (!res.ok) return { ...bet, matches: [] };
+              const mData = await res.json();
+              return { ...bet, matches: mData.data || [] };
+            } catch (err) {
+              console.error(`Error fetching matches for bet ${bet.id}:`, err);
+              return { ...bet, matches: [] };
+            }
           });
 
           Promise.all(betsWithMatches).then(completedBets => {
             setBets(completedBets);
-            const unlocked = (completedBets as any[]).filter(b => b.is_unlocked).map(b => b.id);
+            
+            // Auto-unlock if user is the author or already unlocked
+            const isAuthor = user && user.id === Number(id);
+            const unlocked = (completedBets as any[])
+              .filter(b => b.is_unlocked || isAuthor)
+              .map(b => b.id);
+            
             setUnlockedBets(unlocked);
           });
           setTipster(data.tipster);
+        } else {
+          toast.error(data.error || "Errore nel caricamento");
         }
       })
-      .catch(err => console.error("Error fetching bets:", err))
+      .catch(err => {
+        console.error("Error fetching bets:", err);
+        toast.error("Errore di connessione al database");
+      })
       .finally(() => setIsLoading(false));
 
     // Fetch Top Tipsters for Sidebar

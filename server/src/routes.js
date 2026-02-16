@@ -513,6 +513,7 @@ router.get('/tipsters/:id/public-bets', async (req, res) => {
     const isAdvisor = tipster.balance >= 10000;
 
     // Get bets with lock status
+    console.log(`[DEBUG] Fetching public bets for tipster ${tipsterId}, viewer ${viewerId}`);
     const [betsRows] = await conn.execute(`
       SELECT b.*, 
         (SELECT COUNT(*) FROM tp_saved_bet_selections WHERE saved_bet_id = b.id) as match_count,
@@ -520,7 +521,9 @@ router.get('/tipsters/:id/public-bets', async (req, res) => {
       FROM tp_saved_bets b
       WHERE b.user_id = ?
       ORDER BY b.created_at DESC
-    `, [viewerId, tipsterId]);
+    `, [viewerId || 0, tipsterId]);
+
+    console.log(`[DEBUG] Found ${betsRows.length} bets for tipster ${tipsterId}`);
 
     const betsData = betsRows.map(b => {
       // Calculate price based on balance
