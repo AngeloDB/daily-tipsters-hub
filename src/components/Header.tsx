@@ -42,7 +42,7 @@ export function Header() {
             </h1>
           </Link>
           <a 
-            href="http://localhost:3000" 
+            href="https://sonoquixquesto.it" 
             className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-muted-foreground ml-10 hover:text-primary transition-colors uppercase"
           >
             {t('nav.home')}
