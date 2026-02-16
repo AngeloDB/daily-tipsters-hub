@@ -91,7 +91,7 @@ function BetCard({ bet, onDelete }: { bet: SavedBet; onDelete: (id: any) => void
   const isProd = window.location.hostname !== 'localhost';
   const baseUrl = isProd ? 'https://getprono.online' : 'http://localhost:8081';
   const userProfileUrl = user?.id ? `${baseUrl}/tipsters/${user.id}` : baseUrl;
-  const shareRedirectUrl = (isProd && user?.id) ? `https://getprono.online/api/share/tipster/${user.id}` : userProfileUrl;
+  const shareRedirectUrl = (isProd && user?.id) ? `https://getprono.online/share/tipster/${user.id}` : userProfileUrl;
 
   const statusColors = {
     LIVE: "bg-blue-500/10 text-blue-500 border-blue-500/20",

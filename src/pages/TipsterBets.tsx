@@ -207,7 +207,7 @@ export default function TipsterBetsPage() {
     // FORZIAMO l'URL del proxy per Facebook se non siamo in localhost
     const shareUrl = window.location.hostname === 'localhost' 
       ? url 
-      : `https://getprono.online/api/share/tipster/${id}`;
+      : `https://getprono.online/share/tipster/${id}`;
     
     if (platform === 'whatsapp') {
       window.open(`https://wa.me/?text=${encodeURIComponent(shareText + "\n" + url)}`, '_blank');
