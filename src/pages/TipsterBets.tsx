@@ -154,14 +154,11 @@ export default function TipsterBetsPage() {
             
             // Auto-unlock if user is the author or already unlocked
             const isAuthor = user && user.id === Number(id);
-            const unlocked = (completedBets as any[])
-            // We only keep bets that were ALREADY in the unlocked list OR the user's OWN bets
-            // We REMOVE the logic that automatically unlocks all Advisor bets for the viewer
-            const unlocked = data.data
-              .filter(b => b.is_unlocked || isAuthor)
-              .map(b => b.id);
+            const unlockedIds = completedBets
+              .filter((b: any) => b.is_unlocked || isAuthor)
+              .map((b: any) => b.id);
             
-            setUnlockedBets(unlocked);
+            setUnlockedBets(unlockedIds);
           });
         }
       })
