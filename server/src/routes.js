@@ -734,33 +734,32 @@ router.get('/bets/:id/public-matches', async (req, res) => {
         m.home_team,
         m.away_team,
         m.fixture_date,
-        m.status
-      FROM tp_saved_bet_selections s
-      JOIN wp_football_matches m ON s.match_id = m.fixture_id
-      WHERE s.saved_bet_id = ?
-    `, [betId]);
+          m.status,
+          m.goals_home,
+          m.goals_away,
+          m.minute
+        FROM tp_saved_bet_selections s
+        JOIN wp_football_matches m ON s.match_id = m.fixture_id
+        WHERE s.saved_bet_id = ?
+      `, [betId]);
 
-    const now = new Date();
-    const data = items.map(item => {
-      const matchDateStr = formatDateToItalyNoTZ(item.fixture_date);
-      const matchDate = new Date(matchDateStr);
-      const isExpired = matchDate < now || item.status !== 'NS';
+      const now = new Date();
+      const data = items.map(item => {
+        const matchDateStr = formatDateToItalyNoTZ(item.fixture_date);
+        const matchDate = new Date(matchDateStr);
+        const isExpired = matchDate < now || item.status !== 'NS';
 
-      return {
-        market: item.market,
-        selection: item.selection,
-        odd: item.odd,
-        home_team: item.home_team,
-        away_team: item.away_team,
-        match_date: matchDateStr,
-        isExpired
-      };
-    });
-
-    res.json({ success: true, data });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  } finally {
+        return {
+          market: item.market,
+          selection: item.selection,
+          odd: item.odd,
+          home_team: item.home_team,
+          away_team: item.away_team,
+          match_date: matchDateStr,
+          status: item.status,
+          goals_home: item.goals_home,
+          goals_away: item.goals_away,
+          minute: item.minute,
     if (conn) conn.release();
   }
 });

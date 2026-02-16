@@ -17,6 +17,10 @@ interface BetMatch {
   selection: string;
   odd: number;
   match_date: string;
+  status: string;
+  goals_home: number | null;
+  goals_away: number | null;
+  minute: number | null;
   isExpired: boolean;
 }
 
@@ -274,22 +278,28 @@ export default function TipsterBetsPage() {
                         return (
                           <div 
                             key={idx} 
-                            className={`relative flex items-center justify-between p-3 rounded-xl border ${match.isExpired ? 'bg-destructive/10 border-destructive/30' : 'bg-secondary/40 border-border/50'}`}
+                            className={`relative flex flex-col p-3 rounded-xl border ${match.isExpired ? 'bg-destructive/5 border-destructive/20' : 'bg-secondary/40 border-border/50'}`}
                           >
-                            <div className={`flex flex-col flex-1 ${isVisible ? '' : 'filter blur-[4px] select-none'}`}>
-                              <span className="text-xs font-black truncate">{match.home_team} vs {match.away_team}</span>
-                              <span className="text-[10px] font-bold text-muted-foreground">{match.market}: {match.selection}</span>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                {match.status === 'NS' ? 'Scheduled' : match.status === 'FT' ? 'Finished' : `${match.minute}'`}
+                              </span>
+                              {match.status !== 'NS' && (
+                                <span className="text-xs font-black text-primary">
+                                  {match.goals_home ?? 0} - {match.goals_away ?? 0}
+                                </span>
+                              )}
                             </div>
-                            {match.isExpired && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 rounded-xl">
-                                <Badge variant="destructive" className="font-black text-[10px] uppercase">{t('tipster.expired')}</Badge>
+
+                            <div className="flex items-center justify-between">
+                              <div className={`flex flex-col flex-1 ${isVisible ? '' : 'filter blur-[4px] select-none'}`}>
+                                <span className="text-xs font-black truncate">{match.home_team} vs {match.away_team}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground">{match.market}: {match.selection}</span>
                               </div>
-                            )}
-                            {!match.isExpired && (
                               <div className={`flex items-center gap-2 ${isVisible ? '' : 'filter blur-[3px]'}`}>
                                 <Badge className="font-black h-5">@{match.odd}</Badge>
                               </div>
-                            )}
+                            </div>
                           </div>
                         );
                       })}
@@ -306,7 +316,7 @@ export default function TipsterBetsPage() {
                             {t('tipster.status') || 'STATO SCHEDINA'}
                           </p>
                           <div className="text-3xl font-black text-destructive mb-4 uppercase italic tracking-tighter">
-                            {t('tipster.expired_label') || 'SCADUTA'}
+                            EXPIRED
                           </div>
                           <p className="text-[10px] font-medium text-muted-foreground leading-tight italic">
                             Questa schedina contiene eventi già iniziati e non è più acquistabile.
