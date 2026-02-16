@@ -84,9 +84,12 @@ export default function TipsterBetsPage() {
     fetch(`/api/tipsters/${id}/public-bets`, {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Server error " + res.status);
-        return res.json();
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `Server Error ${res.status}`);
+        }
+        return data;
       })
       .then((data) => {
         if (data.success) {
@@ -120,13 +123,11 @@ export default function TipsterBetsPage() {
             
             setUnlockedBets(unlocked);
           });
-        } else {
-          toast.error(data.error || "Errore nel caricamento");
         }
       })
       .catch(err => {
         console.error("Error fetching bets:", err);
-        toast.error("Errore di connessione al database");
+        toast.error("Errore Caricamento", { description: err.message });
       })
       .finally(() => setIsLoading(false));
 

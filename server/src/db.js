@@ -9,9 +9,9 @@ const dbConfig = {
   database: process.env.MYSQL_DATABASE || 'daily_match_hub',
   port: process.env.MYSQL_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: 10,
-  maxIdle: 5,
-  idleTimeout: 30000,
+  connectionLimit: 50,
+  maxIdle: 10,
+  idleTimeout: 60000,
   queueLimit: 0,
   enableKeepAlive: true,
 };
