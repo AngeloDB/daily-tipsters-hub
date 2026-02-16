@@ -1129,7 +1129,7 @@ router.get('/admin/financial-stats', adminMiddleware, async (req, res) => {
       SELECT 
         u.id as advisor_id,
         u.email as advisor_email,
-        u.display_name,
+        u.email as display_name,
         COUNT(l.id) as total_sales_count,
         COALESCE(SUM(l.purchased_price), 0) as gross_revenue,
         COALESCE(SUM(l.purchased_price) * 0.5, 0) as expected_advisor_share,
@@ -1153,7 +1153,7 @@ router.get('/admin/financial-stats', adminMiddleware, async (req, res) => {
         t.created_at,
         u.email as advisor_email
       FROM tp_transactions t
-      JOIN wp_users u ON t.user_id = u.id
+      LEFT JOIN wp_users u ON t.user_id = u.id
       ORDER BY t.created_at DESC
       LIMIT 100
     `);
