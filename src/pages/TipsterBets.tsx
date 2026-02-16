@@ -54,6 +54,31 @@ export default function TipsterBetsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [unlockedBets, setUnlockedBets] = useState<number[]>([]);
 
+  const checkIsWinning = (match: BetMatch) => {
+    if (match.status === 'NS') return null;
+    const gh = match.goals_home ?? 0;
+    const ga = match.goals_away ?? 0;
+    const market = match.market;
+    const sel = match.selection;
+
+    if (market === 'Match Winner') {
+      if (sel === 'Home' && gh > ga) return true;
+      if (sel === 'Draw' && gh === ga) return true;
+      if (sel === 'Away' && ga > gh) return true;
+    } else if (market === 'Double Chance') {
+      if ((sel === 'Home/Draw' || sel === 'Home or Draw') && gh >= ga) return true;
+      if ((sel === 'Draw/Away' || sel === 'Draw or Away') && ga >= gh) return true;
+      if ((sel === 'Home/Away' || sel === 'Home or Away') && gh !== ga) return true;
+    } else if (market === 'Both Teams Score') {
+      if (sel === 'Yes' && gh > 0 && ga > 0) return true;
+      if (sel === 'No' && (gh === 0 || ga === 0)) return true;
+    } else if (market === 'Goals Over/Under' || market === 'Over/Under') {
+      if (sel === 'Over 2.5' && (gh + ga) > 2.5) return true;
+      if (sel === 'Under 2.5' && (gh + ga) < 2.5) return true;
+    }
+    return false;
+  };
+
   const handleUnlock = async (betId: number) => {
     try {
       const token = localStorage.getItem('token');
@@ -274,18 +299,33 @@ export default function TipsterBetsPage() {
                         const isBetUnlocked = unlockedBets.includes(bet.id);
                         const isBetExpired = bet.matches?.some(m => m.isExpired);
                         const isVisible = isBetUnlocked || isBetExpired;
+                        const isWinning = checkIsWinning(match);
+
+                        let bgColor = 'bg-secondary/40 border-border/50';
+                        let textColor = 'text-primary';
+                        
+                        if (isVisible && isWinning === true) {
+                          bgColor = 'bg-green-500/10 border-green-500/30';
+                          textColor = 'text-green-600';
+                        } else if (isVisible && isWinning === false) {
+                          bgColor = 'bg-red-500/10 border-red-500/30';
+                          textColor = 'text-red-600';
+                        } else if (match.isExpired && !isVisible) {
+                           // This case shouldn't happen much with new logic but for safety
+                           bgColor = 'bg-destructive/5 border-destructive/20';
+                        }
 
                         return (
                           <div 
                             key={idx} 
-                            className={`relative flex flex-col p-3 rounded-xl border ${match.isExpired ? 'bg-destructive/5 border-destructive/20' : 'bg-secondary/40 border-border/50'}`}
+                            className={`relative flex flex-col p-3 rounded-xl border ${bgColor} transition-colors`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${isWinning === true ? 'text-green-600' : isWinning === false ? 'text-red-600' : 'text-muted-foreground'}`}>
                                 {match.status === 'NS' ? 'Scheduled' : match.status === 'FT' ? 'Finished' : `${match.minute}'`}
                               </span>
                               {match.status !== 'NS' && (
-                                <span className="text-xs font-black text-primary">
+                                <span className={`text-xs font-black ${textColor}`}>
                                   {match.goals_home ?? 0} - {match.goals_away ?? 0}
                                 </span>
                               )}
@@ -294,10 +334,14 @@ export default function TipsterBetsPage() {
                             <div className="flex items-center justify-between">
                               <div className={`flex flex-col flex-1 ${isVisible ? '' : 'filter blur-[4px] select-none'}`}>
                                 <span className="text-xs font-black truncate">{match.home_team} vs {match.away_team}</span>
-                                <span className="text-[10px] font-bold text-muted-foreground">{match.market}: {match.selection}</span>
+                                <span className={`text-[10px] font-bold ${isVisible ? (isWinning === true ? 'text-green-600' : isWinning === false ? 'text-red-600' : 'text-muted-foreground') : 'text-muted-foreground'}`}>
+                                  {match.market}: {match.selection}
+                                </span>
                               </div>
                               <div className={`flex items-center gap-2 ${isVisible ? '' : 'filter blur-[3px]'}`}>
-                                <Badge className="font-black h-5">@{match.odd}</Badge>
+                                <Badge className={`font-black h-5 border-none ${isWinning === true ? 'bg-green-600 hover:bg-green-600 text-white' : isWinning === false ? 'bg-red-600 hover:bg-red-600 text-white' : ''}`}>
+                                  @{match.odd}
+                                </Badge>
                               </div>
                             </div>
                           </div>
