@@ -760,8 +760,16 @@ router.get('/bets/:id/public-matches', async (req, res) => {
           goals_home: item.goals_home,
           goals_away: item.goals_away,
           minute: item.minute,
-    if (conn) conn.release();
-  }
+          isExpired
+        };
+      });
+
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    } finally {
+      if (conn) conn.release();
+    }
 });
 
 /**
