@@ -1062,11 +1062,13 @@ router.get('/share/tipster/:id', async (req, res) => {
     const tipster = rows[0];
     const name = tipster?.email ? tipster.email.split('@')[0] : 'Tipster';
     
-    const balance = tipster ? Math.floor(tipster.balance) : 0;
-    const title = balance >= 10000 
-      ? `🏆 Segui ${name}, Advisor Certificato` 
-      : `⚽ Pronostici di ${name} - Tipsters Race`;
-    const description = `Saldo attuale: GP ${balance.toLocaleString()} | Unisciti alla Tipsters Race e segui le migliori schedine!`;
+    // Gestione sicura dei numeri BigInt per JSON/JS
+    const balanceNum = Number(tipster?.balance || 0);
+    const balance = Math.floor(balanceNum);
+    
+    const title = `⚽ Segui ${name} su Tipsters Advisor`;
+    const description = `Vieni qui e segui i miei pronostici su Tipsters Advisor! Saldo attuale: GP ${balance.toLocaleString()}. Unisciti alla sfida! #TipstersAdvisor #Pronostici #Betting`;
+    
     const redirectUrl = tipster 
       ? `https://getprono.online/tipster/${tipsterId}`
       : `https://getprono.online/tipsters`;
@@ -1074,58 +1076,49 @@ router.get('/share/tipster/:id', async (req, res) => {
     // Immagine di share dedicata (stabile in public)
     const imageUrl = "https://getprono.online/stadium-share.jpg";
 
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>${title}</title>
-          <meta property="og:title" content="${title}" />
-          <meta property="og:description" content="${description}" />
-          <meta property="og:url" content="https://getprono.online/api/share/tipster/${tipsterId}" />
-          <meta property="og:type" content="website" />
-          <meta property="og:site_name" content="Tipsters Race" />
-          <meta property="og:image" content="${imageUrl}" />
-          <meta property="og:image:secure_url" content="${imageUrl}" />
-          <meta property="og:image:type" content="image/jpeg" />
-          <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="630" />
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content="${title}" />
-          <meta name="twitter:description" content="${description}" />
-          <meta name="twitter:image" content="${imageUrl}" />
-          <meta http-equiv="refresh" content="2; url=${redirectUrl}" />
-        </head>
-        <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
-          <div style="text-align: center;">
-            <div style="margin-bottom: 20px;">
-              <img src="https://getprono.online/favicon.png" width="80" height="80" style="border-radius: 20px;" />
-            </div>
-            <h1 style="color: #fbbf24; font-size: 24px; margin-bottom: 10px;">Reindirizzamento a Tipsters Race...</h1>
-            <p style="color: #94a3b8;">Ti stiamo portando al profilo di <strong>${name}</strong></p>
-            <p style="font-size: 14px; margin-top: 20px;">Se non vieni reindirizzato, <a href="${redirectUrl}" style="color: #fbbf24; text-decoration: none; font-weight: bold;">clicca qui</a>.</p>
-          </div>
-          <script>
-            setTimeout(() => {
-              window.location.href = "${redirectUrl}";
-            }, 1000);
-          </script>
-        </body>
-      </html>
-    `);
+    const userAgent = req.headers['user-agent'] || '';
+    const isBot = /facebookexternalhit|Facebot|Twitterbot|Pinterest|Googlebot|LinkedInBot/i.test(userAgent);
+
+    res.send(`<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <meta name="description" content="${description}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://getprono.online/share/tipster/${tipsterId}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:image:secure_url" content="${imageUrl}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Tipsters Advisor">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://getprono.online/share/tipster/${tipsterId}">
+    <meta name="twitter:title" content="${title}">
+    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:image" content="${imageUrl}">
+
+    ${!isBot ? `<script>window.location.href = "${redirectUrl}";</script>` : ''}
+    <meta http-equiv="refresh" content="3; url=${redirectUrl}">
+</head>
+<body style="background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; margin: 0;">
+    <div style="text-align: center; padding: 20px;">
+        <img src="https://getprono.online/favicon.png" width="80" style="border-radius: 20px; margin-bottom: 20px;">
+        <h1 style="color: #fbbf24; margin: 0 0 10px 0;">Tipsters Advisor</h1>
+        <p>Ti stiamo portando al profilo di <strong>${name}</strong>...</p>
+        <p style="font-size: 0.8em; margin-top: 20px; color: #64748b;">Se non vieni reindirizzato, <a href="${redirectUrl}" style="color: #fbbf24; text-decoration: none; font-weight: bold;">clicca qui</a>.</p>
+    </div>
+</body>
+</html>`);
   } catch (error) {
     console.error('[SHARE] Error:', error);
-    res.status(200).send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta property="og:title" content="Tipsters Race" />
-          <meta property="og:image" content="https://getprono.online/stadium-share.jpg" />
-          <meta http-equiv="refresh" content="0; url=https://getprono.online" />
-        </head>
-        <body>Redirecting...</body>
-      </html>
-    `);
+    res.redirect('https://getprono.online/tipsters');
   } finally {
     if (conn) conn.release();
   }
