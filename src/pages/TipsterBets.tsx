@@ -266,64 +266,87 @@ export default function TipsterBetsPage() {
 
                     {/* Partite Offuscate */}
                     <div className="p-6 flex-1 space-y-3">
-                      {bet.matches?.map((match, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`relative flex items-center justify-between p-3 rounded-xl border ${match.isExpired ? 'bg-destructive/10 border-destructive/30' : 'bg-secondary/40 border-border/50'}`}
-                        >
-                          <div className={`flex flex-col flex-1 ${unlockedBets.includes(bet.id) ? '' : 'filter blur-[4px] select-none'}`}>
-                            <span className="text-xs font-black truncate">{match.home_team} vs {match.away_team}</span>
-                            <span className="text-[10px] font-bold text-muted-foreground">{match.market}: {match.selection}</span>
+                      {bet.matches?.map((match, idx) => {
+                        const isBetUnlocked = unlockedBets.includes(bet.id);
+                        const isBetExpired = bet.matches?.some(m => m.isExpired);
+                        const isVisible = isBetUnlocked || isBetExpired;
+
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`relative flex items-center justify-between p-3 rounded-xl border ${match.isExpired ? 'bg-destructive/10 border-destructive/30' : 'bg-secondary/40 border-border/50'}`}
+                          >
+                            <div className={`flex flex-col flex-1 ${isVisible ? '' : 'filter blur-[4px] select-none'}`}>
+                              <span className="text-xs font-black truncate">{match.home_team} vs {match.away_team}</span>
+                              <span className="text-[10px] font-bold text-muted-foreground">{match.market}: {match.selection}</span>
+                            </div>
+                            {match.isExpired && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 rounded-xl">
+                                <Badge variant="destructive" className="font-black text-[10px] uppercase">{t('tipster.expired')}</Badge>
+                              </div>
+                            )}
+                            {!match.isExpired && (
+                              <div className={`flex items-center gap-2 ${isVisible ? '' : 'filter blur-[3px]'}`}>
+                                <Badge className="font-black h-5">@{match.odd}</Badge>
+                              </div>
+                            )}
                           </div>
-                          {match.isExpired && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 rounded-xl">
-                              <Badge variant="destructive" className="font-black text-[10px] uppercase">{t('tipster.expired')}</Badge>
-                            </div>
-                          )}
-                          {!match.isExpired && (
-                            <div className={`flex items-center gap-2 ${unlockedBets.includes(bet.id) ? '' : 'filter blur-[3px]'}`}>
-                              <Badge className="font-black h-5">@{match.odd}</Badge>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Box Acquisto */}
                     <div className="p-6 pt-0 mt-auto">
-                      <div className="rounded-2xl bg-secondary/50 border border-border/50 p-5 text-center flex flex-col items-center">
-                        <div className={`mb-4 rounded-full p-3 ${unlockedBets.includes(bet.id) ? 'bg-green-500/10 text-green-600' : 'bg-yellow-500/10 text-yellow-600'}`}>
-                          {unlockedBets.includes(bet.id) ? <CheckCircle2 className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+                      {bet.matches?.some(m => m.isExpired) ? (
+                        <div className="rounded-2xl bg-destructive/5 border border-destructive/20 p-5 text-center flex flex-col items-center">
+                          <div className="mb-4 rounded-full p-3 bg-destructive/10 text-destructive">
+                            <Calendar className="h-6 w-6" />
+                          </div>
+                          <p className="text-xs font-bold text-muted-foreground uppercase mb-2">
+                            {t('tipster.status') || 'STATO SCHEDINA'}
+                          </p>
+                          <div className="text-3xl font-black text-destructive mb-4 uppercase italic tracking-tighter">
+                            {t('tipster.expired_label') || 'SCADUTA'}
+                          </div>
+                          <p className="text-[10px] font-medium text-muted-foreground leading-tight italic">
+                            Questa schedina contiene eventi già iniziati e non è più acquistabile.
+                          </p>
                         </div>
-                        <p className="text-xs font-bold text-muted-foreground uppercase mb-4">
-                          {unlockedBets.includes(bet.id) ? t('tipster.full_access') || 'ACCESSO COMPLETO' : t('tipster.price')}
-                        </p>
-                        <div className="text-4xl font-black text-foreground mb-6">
-                          {unlockedBets.includes(bet.id) ? t('tipster.unlocked') : `€ ${bet.price}`}
+                      ) : (
+                        <div className="rounded-2xl bg-secondary/50 border border-border/50 p-5 text-center flex flex-col items-center">
+                          <div className={`mb-4 rounded-full p-3 ${unlockedBets.includes(bet.id) ? 'bg-green-500/10 text-green-600' : 'bg-yellow-500/10 text-yellow-600'}`}>
+                            {unlockedBets.includes(bet.id) ? <CheckCircle2 className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+                          </div>
+                          <p className="text-xs font-bold text-muted-foreground uppercase mb-4">
+                            {unlockedBets.includes(bet.id) ? t('tipster.full_access') || 'ACCESSO COMPLETO' : t('tipster.price')}
+                          </p>
+                          <div className="text-4xl font-black text-foreground mb-6">
+                            {unlockedBets.includes(bet.id) ? t('tipster.unlocked') : `€ ${bet.price}`}
+                          </div>
+                          
+                          <Button 
+                            onClick={() => unlockedBets.includes(bet.id) ? null : handleUnlock(bet.id)}
+                            disabled={unlockedBets.includes(bet.id)}
+                            className={`w-full gap-2 font-black h-12 rounded-xl shadow-lg transition-all ${
+                              unlockedBets.includes(bet.id) 
+                              ? 'bg-green-600 hover:bg-green-600 cursor-default' 
+                              : 'bg-primary hover:bg-primary/90'
+                            }`}
+                          >
+                            {unlockedBets.includes(bet.id) ? (
+                              <>
+                                <CheckCircle2 className="h-5 w-5" />
+                                {t('tipster.visible') || 'VISIBILE'}
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="h-5 w-5" />
+                                {t('tipster.unlock')}
+                              </>
+                            )}
+                          </Button>
                         </div>
-                        
-                        <Button 
-                          onClick={() => unlockedBets.includes(bet.id) ? null : handleUnlock(bet.id)}
-                          disabled={unlockedBets.includes(bet.id)}
-                          className={`w-full gap-2 font-black h-12 rounded-xl shadow-lg transition-all ${
-                            unlockedBets.includes(bet.id) 
-                            ? 'bg-green-600 hover:bg-green-600 cursor-default' 
-                            : 'bg-primary hover:bg-primary/90'
-                          }`}
-                        >
-                          {unlockedBets.includes(bet.id) ? (
-                            <>
-                              <CheckCircle2 className="h-5 w-5" />
-                              {t('tipster.visible') || 'VISIBILE'}
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingCart className="h-5 w-5" />
-                              {t('tipster.unlock')}
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                      )}
                     </div>
 
                     {/* Footer Statistiche */}
