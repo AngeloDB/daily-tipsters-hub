@@ -92,19 +92,24 @@ export default function TipsterBetsPage() {
         if (data.success) {
           const rawBets = data.data || [];
           
-          const betsWithMatches = rawBets.map(async (bet: any) => {
-            try {
-              const res = await fetch(`/api/bets/${bet.id}/public-matches`);
-              if (!res.ok) return { ...bet, matches: [] };
-              const mData = await res.json();
-              return { ...bet, matches: mData.data || [] };
-            } catch (err) {
-              console.error(`Error fetching matches for bet ${bet.id}:`, err);
-              return { ...bet, matches: [] };
-            }
-          });
+          setTipster(data.tipster);
 
-          Promise.all(betsWithMatches).then(completedBets => {
+          // Fetch matches sequentially to avoid DB lock/congestion
+          const fetchAllMatches = async () => {
+            const results = [];
+            for (const bet of rawBets) {
+              try {
+                const res = await fetch(`/api/bets/${bet.id}/public-matches`);
+                const mData = await res.json();
+                results.push({ ...bet, matches: mData.success ? mData.data : [] });
+              } catch (err) {
+                results.push({ ...bet, matches: [] });
+              }
+            }
+            return results;
+          };
+
+          fetchAllMatches().then(completedBets => {
             setBets(completedBets);
             
             // Auto-unlock if user is the author or already unlocked
@@ -115,7 +120,6 @@ export default function TipsterBetsPage() {
             
             setUnlockedBets(unlocked);
           });
-          setTipster(data.tipster);
         } else {
           toast.error(data.error || "Errore nel caricamento");
         }
