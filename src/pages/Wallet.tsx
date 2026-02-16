@@ -44,7 +44,12 @@ export default function WalletPage() {
 
   const fetchWallet = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('tipster_auth_token');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      
       const res = await fetch('/api/advisor/wallet', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -52,6 +57,8 @@ export default function WalletPage() {
       if (data.success) {
         setBalance(data.balance);
         setTransactions(data.transactions);
+      } else {
+        console.error("Wallet error:", data.error);
       }
     } catch (err) {
       toast.error("Errore nel caricamento del portafoglio");
@@ -81,7 +88,7 @@ export default function WalletPage() {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('tipster_auth_token');
       const res = await fetch('/api/advisor/withdraw', {
         method: 'POST',
         headers: { 
