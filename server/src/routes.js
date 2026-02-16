@@ -496,8 +496,6 @@ router.get('/tipsters', async (req, res) => {
           (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) as total_bets
       FROM wp_users u
       LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
-      WHERE (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) > 0
-         OR COALESCE(b.balance, 0) >= 0
       ORDER BY balance DESC, total_bets DESC
       LIMIT 100
     `);
@@ -513,12 +511,13 @@ router.get('/tipsters', async (req, res) => {
       return {
         id: r.id,
         displayName: name,
-        balance: r.balance,
+        balance: Number(r.balance) || 0,
         total_bets: r.total_bets,
-        isAdvisor: r.balance >= 10000
+        isAdvisor: (Number(r.balance) || 0) >= 10000
       };
     });
 
+    console.log(`[API] Found ${data.length} tipsters for community`);
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
