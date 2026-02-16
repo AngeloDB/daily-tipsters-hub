@@ -497,16 +497,16 @@ export default function TipsterBetsPage() {
           <DialogContent className="sm:max-w-[425px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter">
-                Sblocca Schedina #{selectedBet?.id}
+                {t('unlock.title', { id: selectedBet?.id })}
               </DialogTitle>
               <DialogDescription className="font-bold">
-                Acquista l'accesso completo per vedere tutti i match e le selezioni.
+                {t('unlock.desc')}
               </DialogDescription>
             </DialogHeader>
             
             <div className="py-6 flex flex-col items-center gap-6">
                <div className="text-center">
-                  <span className="text-sm text-muted-foreground uppercase font-black tracking-widest">Totale da pagare</span>
+                  <span className="text-sm text-muted-foreground uppercase font-black tracking-widest">{t('unlock.total_to_pay')}</span>
                   <div className="text-4xl font-black text-primary">€ {selectedBet?.price}</div>
                </div>
 
@@ -549,16 +549,16 @@ export default function TipsterBetsPage() {
                           });
                           const result = await res.json();
                           if (result.success) {
-                            toast.success("Pagamento completato!", { description: "La schedina è stata sbloccata correttamente." });
+                            toast.success(t('unlock.success'), { description: t('unlock.success_desc') });
                             setUnlockedBets(prev => [...prev, selectedBet.id]);
                             setShowPaymentModal(false);
                           } else {
-                            toast.error("Errore nel pagamento", { description: result.error });
+                            toast.error(t('unlock.error'), { description: result.error });
                           }
                         }}
                         onError={(err) => {
                           console.error("PayPal Error:", err);
-                          toast.error("Errore PayPal", { description: "Non è stato possibile completare il pagamento." });
+                          toast.error(t('unlock.paypal_error'), { description: t('unlock.paypal_error_desc') });
                         }}
                       />
                     </PayPalScriptProvider>
@@ -568,7 +568,7 @@ export default function TipsterBetsPage() {
                {!paypalConfig && (
                  <div className="flex flex-col items-center gap-2 py-10">
                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                   <p className="text-xs font-bold text-muted-foreground uppercase">Caricamento PayPal...</p>
+                   <p className="text-xs font-bold text-muted-foreground uppercase">{t('common.loading')}</p>
                  </div>
                )}
             </div>

@@ -87,6 +87,17 @@ const resources = {
         "current_balance": "Bilancio Attuale",
         "bet_plural": "{{count}} Schedine"
       },
+      "unlock": {
+        "title": "Sblocca Schedina #{{id}}",
+        "desc": "Acquista l'accesso completo per vedere tutti i match e le selezioni.",
+        "payment_method": "Metodo di Pagamento",
+        "total_to_pay": "Totale da pagare",
+        "success": "Pagamento completato!",
+        "success_desc": "La schedina è stata sbloccata correttamente.",
+        "error": "Errore nel pagamento",
+        "paypal_error": "Errore PayPal",
+        "paypal_error_desc": "Non è stato possibile completare il pagamento."
+      },
       "matches": {
         "title": "Palinsesto",
         "loading": "Caricamento partite...",
@@ -268,6 +279,17 @@ const resources = {
         "current_balance": "Current Balance",
         "bet_plural": "{{count}} Bets"
       },
+      "unlock": {
+        "title": "Unlock Bet #{{id}}",
+        "desc": "Purchase full access to see all matches and selections.",
+        "payment_method": "Payment Method",
+        "total_to_pay": "Total to pay",
+        "success": "Payment completed!",
+        "success_desc": "The bet has been successfully unlocked.",
+        "error": "Payment error",
+        "paypal_error": "PayPal Error",
+        "paypal_error_desc": "It was not possible to complete the payment."
+      },
       "matches": {
         "title": "Matches of the Day",
         "loading": "Loading matches...",
@@ -383,6 +405,17 @@ const resources = {
         "view_profile": "VER PERFIL",
         "current_balance": "Saldo Actual",
         "bet_plural": "{{count}} Apuestas"
+      },
+      "unlock": {
+        "title": "Desbloquear Apuesta #{{id}}",
+        "desc": "Compre el acceso completo para ver todos los partidos y selecciones.",
+        "payment_method": "Método de Pago",
+        "total_to_pay": "Total a pagar",
+        "success": "¡Pago completado!",
+        "success_desc": "La apuesta ha sido desbloqueada correctamente.",
+        "error": "Error en el pago",
+        "paypal_error": "Error de PayPal",
+        "paypal_error_desc": "No fue posible completar el pago."
       },
       "matches": {
         "title": "Partidos del Día",
@@ -549,6 +582,17 @@ const resources = {
         "view_profile": "VOIR LE PROFIL",
         "current_balance": "Solde Actuel",
         "bet_plural": "{{count}} Paris"
+      },
+      "unlock": {
+        "title": "Débloquer le Pari #{{id}}",
+        "desc": "Achetez l'accès complet pour voir tous les matchs et sélections.",
+        "payment_method": "Méthode de Paiement",
+        "total_to_pay": "Total à payer",
+        "success": "Paiement terminé !",
+        "success_desc": "Le pari a été débloqué avec succès.",
+        "error": "Erreur de paiement",
+        "paypal_error": "Erreur PayPal",
+        "paypal_error_desc": "Il n'a pas été possible de terminer le paiement."
       },
       "matches": {
         "title": "Matchs du Jour",
