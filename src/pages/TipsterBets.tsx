@@ -7,8 +7,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import i18n from "@/lib/i18n";
 
 interface BetMatch {
   home_team: string;
@@ -53,6 +56,27 @@ export default function TipsterBetsPage() {
   const [topTipsters, setTopTipsters] = useState<TipsterInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unlockedBets, setUnlockedBets] = useState<number[]>([]);
+  const [paypalConfig, setPaypalConfig] = useState<{clientId: string, mode: string} | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBet, setSelectedBet] = useState<Bet | null>(null);
+
+  useEffect(() => {
+    const fetchPaypalConfig = async () => {
+      try {
+        const response = await fetch('/api/config/paypal-public');
+        const data = await response.json();
+        if (data.success && data.paypal_client_id) {
+          setPaypalConfig({
+            clientId: data.paypal_client_id,
+            mode: data.paypal_mode || 'sandbox'
+          });
+        }
+      } catch (error) {
+        console.error('[PAYPAL] Error fetching config:', error);
+      }
+    };
+    fetchPaypalConfig();
+  }, []);
 
   const checkIsWinning = (match: BetMatch) => {
     if (match.status === 'NS') return null;
@@ -79,30 +103,14 @@ export default function TipsterBetsPage() {
     return false;
   };
 
-  const handleUnlock = async (betId: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error(t('nav.login_required') || "Devi essere loggato per sbloccare le schedine");
-        return;
-      }
-
-      const res = await fetch(`/api/bets/${betId}/unlock`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(t('tipster.unlock_success') || "Evento Sbloccato!", { description: "Le partite ora sono visibili." });
-        setUnlockedBets(prev => [...prev, betId]);
-      } else {
-        toast.error(t('common.error'), { description: data.error });
-      }
-    } catch (err) {
-      toast.error(t('common.error'));
+  const handleUnlock = (bet: Bet) => {
+    const token = localStorage.getItem('token') || localStorage.getItem('tipster_auth_token');
+    if (!token) {
+      toast.error(t('nav.login_required') || "Devi essere loggato per sbloccare le schedine");
+      return;
     }
+    setSelectedBet(bet);
+    setShowPaymentModal(true);
   };
 
   useEffect(() => {
@@ -382,7 +390,7 @@ export default function TipsterBetsPage() {
                           </div>
                           
                           <Button 
-                            onClick={() => unlockedBets.includes(bet.id) ? null : handleUnlock(bet.id)}
+                            onClick={() => unlockedBets.includes(bet.id) ? null : handleUnlock(bet)}
                             disabled={unlockedBets.includes(bet.id)}
                             className={`w-full gap-2 font-black h-12 rounded-xl shadow-lg transition-all ${
                               unlockedBets.includes(bet.id) 
@@ -474,6 +482,89 @@ export default function TipsterBetsPage() {
           </div>
 
         </div>
+
+        {/* Modal per il pagamento PayPal */}
+        <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+          <DialogContent className="sm:max-w-[425px] rounded-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter">
+                Sblocca Schedina #{selectedBet?.id}
+              </DialogTitle>
+              <DialogDescription className="font-bold">
+                Acquista l'accesso completo per vedere tutti i match e le selezioni.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-6 flex flex-col items-center gap-6">
+               <div className="text-center">
+                  <span className="text-sm text-muted-foreground uppercase font-black tracking-widest">Totale da pagare</span>
+                  <div className="text-4xl font-black text-primary">€ {selectedBet?.price}</div>
+               </div>
+
+               {paypalConfig && selectedBet && (
+                 <div className="w-full min-h-[150px]">
+                    <PayPalScriptProvider options={{ 
+                      clientId: paypalConfig.clientId,
+                      currency: "EUR",
+                      intent: "capture",
+                    }}>
+                      <PayPalButtons 
+                        style={{ layout: "vertical", shape: "pill", label: "pay" }}
+                        createOrder={async () => {
+                          const token = localStorage.getItem('token') || localStorage.getItem('tipster_auth_token');
+                          const res = await fetch("/api/paypal/create-order", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "Authorization": `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                              betId: selectedBet.id,
+                              price: selectedBet.price
+                            })
+                          });
+                          const order = await res.json();
+                          return order.id;
+                        }}
+                        onApprove={async (data) => {
+                          const token = localStorage.getItem('token') || localStorage.getItem('tipster_auth_token');
+                          const res = await fetch("/api/paypal/capture-order", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "Authorization": `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                              orderId: data.orderID
+                            })
+                          });
+                          const result = await res.json();
+                          if (result.success) {
+                            toast.success("Pagamento completato!", { description: "La schedina è stata sbloccata correttamente." });
+                            setUnlockedBets(prev => [...prev, selectedBet.id]);
+                            setShowPaymentModal(false);
+                          } else {
+                            toast.error("Errore nel pagamento", { description: result.error });
+                          }
+                        }}
+                        onError={(err) => {
+                          console.error("PayPal Error:", err);
+                          toast.error("Errore PayPal", { description: "Non è stato possibile completare il pagamento." });
+                        }}
+                      />
+                    </PayPalScriptProvider>
+                 </div>
+               )}
+
+               {!paypalConfig && (
+                 <div className="flex flex-col items-center gap-2 py-10">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                   <p className="text-xs font-bold text-muted-foreground uppercase">Caricamento PayPal...</p>
+                 </div>
+               )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

@@ -638,6 +638,218 @@ router.post('/advisor/withdraw', authMiddleware, async (req, res) => {
 });
 
 /**
+ * GET /api/config/paypal-public - Get public PayPal configuration
+ */
+router.get('/config/paypal-public', async (req, res) => {
+  let db;
+  try {
+    db = await getConnection();
+    const [rows] = await db.query(
+      'SELECT config_key, config_value FROM wp_admin_config WHERE config_key IN ("paypal_client_id", "paypal_mode")'
+    );
+
+    const config = {};
+    if (rows && Array.isArray(rows)) {
+      rows.forEach(row => {
+        config[row.config_key] = row.config_value;
+      });
+    }
+
+    res.json({
+      success: true,
+      paypal_client_id: config.paypal_client_id || process.env.PAYPAL_CLIENT_ID || '',
+      paypal_mode: config.paypal_mode || process.env.PAYPAL_MODE || 'sandbox'
+    });
+  } catch (error) {
+    console.error('[PUBLIC] Get paypal config error:', error);
+    res.status(500).json({ success: false, error: 'Failed to load paypal config' });
+  } finally {
+    if (db) {
+      try { db.release(); } catch (e) { }
+    }
+  }
+});
+
+// PayPal Helpers
+async function getPayPalAccessToken() {
+  let db;
+  try {
+    db = await getConnection();
+    const [rows] = await db.query('SELECT config_key, config_value FROM wp_admin_config WHERE config_key LIKE "paypal_%"');
+
+    const config = {};
+    if (rows && Array.isArray(rows)) {
+      rows.forEach(row => {
+        config[row.config_key] = row.config_value;
+      });
+    }
+
+    const clientId = config.paypal_client_id || process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = config.paypal_client_secret || process.env.PAYPAL_CLIENT_SECRET;
+    const mode = config.paypal_mode || process.env.PAYPAL_MODE || 'sandbox';
+
+    if (!clientId || !clientSecret) {
+      throw new Error('PayPal credentials not configured in Admin Panel');
+    }
+
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
+    // Using global fetch (Node 18+)
+    const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`PayPal Auth Error: ${errorData.error_description || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return { token: data.access_token, baseUrl };
+  } finally {
+    if (db) {
+      try { db.release(); } catch (e) { }
+    }
+  }
+}
+
+/**
+ * POST /api/paypal/create-order
+ */
+router.post('/paypal/create-order', authMiddleware, async (req, res) => {
+  try {
+    const { betId, price } = req.body;
+
+    if (!betId || !price) {
+      return res.status(400).json({ success: false, error: 'Missing betId or price' });
+    }
+
+    console.log(`[PAYPAL] Creating order for bet #${betId} at ${price} EUR`);
+    const { token, baseUrl } = await getPayPalAccessToken();
+
+    const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        intent: 'CAPTURE',
+        purchase_units: [{
+          custom_id: betId.toString(),
+          amount: {
+            currency_code: 'EUR',
+            value: parseFloat(price).toFixed(2),
+          },
+          description: `Acquisto Schedina Tipsters Hub - #${betId}`,
+        }],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`PayPal Create Order Error: ${JSON.stringify(errorData)}`);
+    }
+
+    const order = await response.json();
+    res.json(order);
+  } catch (error) {
+    console.error('[PAYPAL] Create Order Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/paypal/capture-order
+ */
+router.post('/paypal/capture-order', authMiddleware, async (req, res) => {
+  let conn;
+  try {
+    const { orderId } = req.body;
+    const buyerId = req.userId;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: 'Missing orderId' });
+    }
+
+    console.log(`[PAYPAL] Capturing order ${orderId}`);
+    const { token, baseUrl } = await getPayPalAccessToken();
+
+    const response = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}/capture`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`PayPal Capture Error: ${JSON.stringify(errorData)}`);
+    }
+
+    const capture = await response.json();
+
+    if (capture.status === 'COMPLETED') {
+        const betId = capture.purchase_units[0].payments.captures[0].custom_id;
+        const paidAmount = parseFloat(capture.purchase_units[0].payments.captures[0].amount.value);
+        const payerEmail = capture.payer.email_address;
+
+        conn = await getConnection();
+        await conn.beginTransaction();
+
+        // 1. Get bet info
+        const [betRows] = await conn.execute(`
+          SELECT b.* FROM tp_saved_bets b WHERE b.id = ?
+        `, [betId]);
+
+        if (betRows.length === 0) {
+            throw new Error('Bet non trovata dopo il pagamento');
+        }
+
+        const bet = betRows[0];
+        const advisorId = bet.user_id;
+
+        // 2. Record lock
+        await conn.execute(
+          'INSERT INTO tp_bet_locks (user_id, bet_id, purchased_price) VALUES (?, ?, ?)',
+          [buyerId, betId, paidAmount]
+        );
+
+        // 3. Increment Advisor wallet
+        await conn.execute(`
+          INSERT INTO tp_advisor_wallets (user_id, balance_euro) 
+          VALUES (?, ?) 
+          ON DUPLICATE KEY UPDATE balance_euro = balance_euro + ?
+        `, [advisorId, paidAmount, paidAmount]);
+
+        // 4. Record transaction for advisor
+        await conn.execute(
+          'INSERT INTO tp_transactions (user_id, amount, type, status, payment_email) VALUES (?, ?, "sale", "completed", ?)',
+          [advisorId, paidAmount, payerEmail]
+        );
+
+        await conn.commit();
+        res.json({ success: true, capture });
+    } else {
+        res.status(400).json({ success: false, error: 'Pagemento non completato', status: capture.status });
+    }
+  } catch (error) {
+    console.error('[PAYPAL] Capture Order Error:', error);
+    if (conn) await conn.rollback();
+    res.status(500).json({ success: false, error: error.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+/**
  * POST /api/bets/:id/unlock
  * Unlock a bet (Simulation of purchase)
  */
