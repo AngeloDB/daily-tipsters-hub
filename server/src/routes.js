@@ -1101,6 +1101,11 @@ router.get('/share/tipster/:id', async (req, res) => {
   } catch (error) {
     console.error('[SHARE] Error:', error);
     res.redirect('https://getprono.online');
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 /**
  * GET /api/admin/financial-stats
  * Returns financial overview for admin panel
