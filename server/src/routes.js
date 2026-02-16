@@ -1066,8 +1066,8 @@ router.get('/share/tipster/:id', async (req, res) => {
     const balanceNum = Number(tipster?.balance || 0);
     const balance = Math.floor(balanceNum);
     
-    const title = `⚽ Segui ${name} su Tipsters Advisor`;
-    const description = `Vieni qui e segui i miei pronostici su Tipsters Advisor! Saldo attuale: GP ${balance.toLocaleString()}. Unisciti alla sfida! #TipstersAdvisor #Pronostici #Betting`;
+    const title = `⚽ Vieni a trovarmi su Tipster Advisor - ${name}`;
+    const description = `Vieni a trovarmi su Tipster Advisor e partecipa alla gara insieme a me! Saldo attuale: GP ${balance.toLocaleString()}. #TipsterAdvisor #Pronostici #GaraTipster #Betting`;
     
     const redirectUrl = tipster 
       ? `https://getprono.online/tipster/${tipsterId}`
