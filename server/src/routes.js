@@ -657,8 +657,8 @@ router.get('/config/paypal-public', async (req, res) => {
 
     res.json({
       success: true,
-      paypal_client_id: config.paypal_client_id || process.env.PAYPAL_CLIENT_ID || '',
-      paypal_mode: config.paypal_mode || process.env.PAYPAL_MODE || 'sandbox'
+      paypal_client_id: (config.paypal_client_id || process.env.PAYPAL_CLIENT_ID || '').trim(),
+      paypal_mode: (config.paypal_mode || process.env.PAYPAL_MODE || 'sandbox').trim()
     });
   } catch (error) {
     console.error('[PUBLIC] Get paypal config error:', error);
@@ -684,9 +684,9 @@ async function getPayPalAccessToken() {
       });
     }
 
-    const clientId = config.paypal_client_id || process.env.PAYPAL_CLIENT_ID;
-    const clientSecret = config.paypal_client_secret || process.env.PAYPAL_CLIENT_SECRET;
-    const mode = config.paypal_mode || process.env.PAYPAL_MODE || 'sandbox';
+    const clientId = (config.paypal_client_id || process.env.PAYPAL_CLIENT_ID || '').trim();
+    const clientSecret = (config.paypal_client_secret || process.env.PAYPAL_CLIENT_SECRET || '').trim();
+    const mode = (config.paypal_mode || process.env.PAYPAL_MODE || 'sandbox').trim();
 
     if (!clientId || !clientSecret) {
       throw new Error('PayPal credentials not configured in Admin Panel');
