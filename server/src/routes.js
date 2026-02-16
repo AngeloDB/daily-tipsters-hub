@@ -512,7 +512,7 @@ router.get('/tipsters', async (req, res) => {
         id: r.id,
         displayName: name,
         balance: Number(r.balance) || 0,
-        total_bets: r.total_bets,
+        total_bets: Number(r.total_bets || 0),
         isAdvisor: (Number(r.balance) || 0) >= 10000
       };
     });
@@ -520,7 +520,8 @@ router.get('/tipsters', async (req, res) => {
     console.log(`[API] Found ${data.length} tipsters for community`);
     res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('[API] Error in /tipsters:', error);
+    res.status(500).json({ success: false, error: 'Database error occurred' });
   } finally {
     if (conn) conn.release();
   }
