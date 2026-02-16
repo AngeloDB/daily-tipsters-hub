@@ -144,7 +144,7 @@ export default function WalletPage() {
             </div>
             <div>
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('wallet.balance')}</p>
-              <p className="text-4xl font-black text-foreground">€ {balance.toFixed(2)}</p>
+              <p className="text-4xl font-black text-foreground">€ {Number(balance).toFixed(2)}</p>
             </div>
           </Card>
         </div>
@@ -254,7 +254,7 @@ export default function WalletPage() {
 
                       <div className="text-right flex flex-col items-end gap-2">
                         <p className={`text-xl font-black ${tx.type === 'sale' ? 'text-green-600' : 'text-blue-600'}`}>
-                          {tx.type === 'sale' ? '+' : '-'} € {tx.amount.toFixed(2)}
+                          {tx.type === 'sale' ? '+' : '-'} € {Number(tx.amount).toFixed(2)}
                         </p>
                         <Badge variant="outline" className={`rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-widest ${
                           tx.status === 'completed' ? 'bg-green-500/10 border-green-500/20 text-green-600' :
