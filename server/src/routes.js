@@ -490,21 +490,30 @@ router.get('/tipsters', async (req, res) => {
     const [rows] = await conn.execute(`
       SELECT 
           u.id, 
-          u.email as display_name,
+          COALESCE(u.display_name, u.email) as name_raw,
+          u.email,
           COALESCE(b.balance, 0) as balance,
           (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) as total_bets
       FROM wp_users u
       LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
       WHERE (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) > 0
-         OR COALESCE(b.balance, 0) >= 0
+         OR COALESCE(b.balance, 0) > 0
       ORDER BY balance DESC, total_bets DESC
     `);
 
-    const data = rows.map(r => ({
-      ...r,
-      isAdvisor: r.balance >= 10000,
-      displayName: r.display_name ? r.display_name.split('@')[0] : 'Tipster Anonimo'
-    }));
+    const data = rows.map(r => {
+      const name = r.name_raw && r.name_raw.trim() !== '' 
+        ? r.name_raw 
+        : (r.email ? r.email.split('@')[0] : 'Tipster');
+      
+      return {
+        id: r.id,
+        displayName: name,
+        balance: r.balance,
+        total_bets: r.total_bets,
+        isAdvisor: r.balance >= 10000
+      };
+    });
 
     res.json({ success: true, data });
   } catch (error) {
@@ -1123,7 +1132,6 @@ router.get('/share/tipster/:id', async (req, res) => {
   } finally {
     if (conn) conn.release();
   }
-});
 });
 
 /**
