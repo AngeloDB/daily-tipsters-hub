@@ -1045,7 +1045,7 @@ router.get('/share/tipster/:id', async (req, res) => {
     const tipsterId = req.params.id;
 
     const [rows] = await conn.execute(`
-      SELECT u.id, u.email as display_name, COALESCE(b.balance, 0) as balance
+      SELECT u.id, u.email, u.display_name, COALESCE(b.balance, 0) as balance
       FROM wp_users u
       LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
       WHERE u.id = ?
@@ -1056,16 +1056,20 @@ router.get('/share/tipster/:id', async (req, res) => {
     }
 
     const tipster = rows[0];
-    const name = tipster.display_name ? tipster.display_name.split('@')[0] : 'Tipster';
+    // Se display_name è vuoto, usa l'email troncata
+    const name = tipster.display_name && tipster.display_name.trim() !== '' 
+      ? tipster.display_name 
+      : (tipster.email ? tipster.email.split('@')[0] : 'Tipster');
+    
     const balance = Math.floor(tipster.balance);
     const title = balance >= 10000 
       ? `🏆 Segui ${name}, Advisor Certificato` 
       : `⚽ Pronostici di ${name} - Tipsters Race`;
     const description = `Saldo attuale: GP ${balance.toLocaleString()} | Unisciti alla Tipsters Race e segui le migliori schedine!`;
-    const redirectUrl = `https://getprono.online/tipsters/${tipsterId}`;
+    const redirectUrl = `https://getprono.online/tipster/${tipsterId}`;
     
-    // Proviamo con il LOGO che è più leggero e viene letto meglio da Facebook inizialmente
-    const imageUrl = "https://getprono.online/images/logo-CvVUroNE.png";
+    // Immagine di share dedicata (stabile in public)
+    const imageUrl = "https://getprono.online/stadium-share.jpg";
 
     res.send(`
       <!DOCTYPE html>
@@ -1076,14 +1080,13 @@ router.get('/share/tipster/:id', async (req, res) => {
           <meta property="og:title" content="${title}" />
           <meta property="og:description" content="${description}" />
           <meta property="og:url" content="https://getprono.online/api/share/tipster/${tipsterId}" />
-          <meta property="og:type" content="article" />
+          <meta property="og:type" content="website" />
           <meta property="og:site_name" content="Tipsters Race" />
           <meta property="og:image" content="${imageUrl}" />
           <meta property="og:image:secure_url" content="${imageUrl}" />
-          <meta property="og:image:type" content="image/png" />
-          <meta property="og:image:width" content="600" />
-          <meta property="og:image:height" content="600" />
-          <meta name="twitter:card" content="summary" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content="${title}" />
           <meta name="twitter:description" content="${description}" />
           <meta name="twitter:image" content="${imageUrl}" />
@@ -1091,10 +1094,18 @@ router.get('/share/tipster/:id', async (req, res) => {
         </head>
         <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
           <div style="text-align: center;">
-            <h1 style="color: #3b82f6;">Redirecting to Tipsters Race...</h1>
-            <p>Se non vieni reindirizzato entro pochi secondi, <a href="${redirectUrl}" style="color: #60a5fa;">clicca qui</a>.</p>
+            <div style="margin-bottom: 20px;">
+              <img src="https://getprono.online/favicon.png" width="80" height="80" style="border-radius: 20px;" />
+            </div>
+            <h1 style="color: #fbbf24; font-size: 24px; margin-bottom: 10px;">Reindirizzamento a Tipsters Race...</h1>
+            <p style="color: #94a3b8;">Ti stiamo portando al profilo di <strong>${name}</strong></p>
+            <p style="font-size: 14px; margin-top: 20px;">Se non vieni reindirizzato, <a href="${redirectUrl}" style="color: #fbbf24; text-decoration: none; font-weight: bold;">clicca qui</a>.</p>
           </div>
-          <script>window.location.href = "${redirectUrl}";</script>
+          <script>
+            setTimeout(() => {
+              window.location.href = "${redirectUrl}";
+            }, 1000);
+          </script>
         </body>
       </html>
     `);
