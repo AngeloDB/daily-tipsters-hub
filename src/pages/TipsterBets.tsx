@@ -63,16 +63,28 @@ export default function TipsterBetsPage() {
   useEffect(() => {
     const fetchPaypalConfig = async () => {
       try {
+        console.log('[PAYPAL] Fetching config...');
         const response = await fetch('/api/config/paypal-public');
         const data = await response.json();
+        console.log('[PAYPAL] Raw config data:', data);
         if (data.success && data.paypal_client_id) {
           setPaypalConfig({
             clientId: data.paypal_client_id,
             mode: data.paypal_mode || 'sandbox'
           });
+        } else {
+          console.warn('[PAYPAL] Missing client ID in database, using fallback');
+          setPaypalConfig({
+            clientId: 'test',
+            mode: 'sandbox'
+          });
         }
       } catch (error) {
         console.error('[PAYPAL] Error fetching config:', error);
+        setPaypalConfig({
+          clientId: 'test',
+          mode: 'sandbox'
+        });
       }
     };
     fetchPaypalConfig();

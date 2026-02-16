@@ -107,26 +107,6 @@ const resources = {
         "error": "Errore",
         "success": "Successo"
       },
-      "betslip": {
-        "title": "Schedina",
-        "empty": "La tua schedina è vuota",
-        "add_selection": "Clicca su una quota per aggiungerla",
-        "clear": "Svuota tutto",
-        "stake": "Stake GP",
-        "all": "Tutti",
-        "potential_win": "Potenziale Vincita",
-        "confirm": "CONFERMA GIOCATA",
-        "confirm_title": "Confermi la giocata?",
-        "confirm_desc": "Una volta confermata, la schedina non può essere annullata o cancellata. Verrà scalato l'importo di {{stake}} GP dal tuo saldo.",
-        "confirm_and_play": "Conferma e Gioca",
-        "saving": "Salvataggio...",
-        "not_enough_gp": "Non hai abbastanza Punti GP!",
-        "success": "Schedina salvata con successo!",
-        "total_odds": "Quota Totale",
-        "clear_confirm": "Sei sicuro di voler svuotare la schedina?",
-        "cancel": "Annulla",
-        "delete": "Elimina"
-      },
       "saved_bets": {
         "title": "Le tue schedine",
         "empty": "Nessuna schedina salvata",
