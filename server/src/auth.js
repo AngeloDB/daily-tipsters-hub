@@ -61,15 +61,14 @@ export async function loginUser(email, password) {
 
     // Get GP Balance
     const [gp] = await db.query('SELECT balance FROM wp_user_gp_balance WHERE user_id = ?', [user.id]);
-    let gpBalance = gp.length > 0 ? gp[0].balance : 100;
     
-    // Force 100 if balance is 0 or null
-    if (gpBalance === 0 || gpBalance === null) {
+    let gpBalance;
+    if (gp.length === 0) {
       gpBalance = 100;
+      await db.query('INSERT INTO wp_user_gp_balance (user_id, balance) VALUES (?, 100)', [user.id]);
+    } else {
+      gpBalance = gp[0].balance;
     }
-    
-    // Create or update record
-    await db.query('INSERT INTO wp_user_gp_balance (user_id, balance) VALUES (?, 100) ON DUPLICATE KEY UPDATE balance = 100', [user.id]);
 
     const token = jwt.sign(
       { userId: user.id, email, isAdmin: Boolean(user.is_admin) }, 
@@ -117,12 +116,15 @@ export async function getCurrentUser(userId) {
 
     const user = users[0];
     
-    // Force 100 if balance is 0 or null
-    const finalBalance = (user.gp_balance === null || user.gp_balance === 0) ? 100 : user.gp_balance;
+    // Get current balance
+    const [gp] = await db.query('SELECT balance FROM wp_user_gp_balance WHERE user_id = ?', [userId]);
     
-    // Ensure they have a GP balance entry if missing or 0
-    if (user.gp_balance === null || user.gp_balance === 0) {
-       await db.query('INSERT INTO wp_user_gp_balance (user_id, balance) VALUES (?, 100) ON DUPLICATE KEY UPDATE balance = 100', [user.id]);
+    let finalBalance;
+    if (gp.length === 0) {
+      finalBalance = 100;
+      await db.query('INSERT INTO wp_user_gp_balance (user_id, balance) VALUES (?, 100)', [userId]);
+    } else {
+      finalBalance = gp[0].balance;
     }
 
     console.log(`[AUTH] User found: ${user.email}, balance: ${finalBalance}`);
