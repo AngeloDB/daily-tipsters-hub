@@ -454,13 +454,13 @@ router.get('/data/teams', async (req, res) => {
     // Try to get teams from adb_squadre first (if exists), or fallback to matches
     let teams = [];
     try {
-      const [rows] = await db.query('SELECT id_team as id, team as name, logo FROM adb_squadre ORDER BY team ASC');
+      const [rows] = await db.query('SELECT id_team as id, team as name, \'\' as logo FROM adb_squadre ORDER BY team ASC');
       if (rows.length > 0) teams = rows;
     } catch (e) {
-      console.warn('adb_squadre table not found, falling back to distinct teams from matches');
+      console.warn('adb_squadre table not found or missing columns, falling back to distinct teams from matches');
       // Fallback
       const [rows] = await db.query(`
-        SELECT DISTINCT home_team_id as id, home_team as name, home_team_logo as logo 
+        SELECT DISTINCT home_team_id as id, home_team as name, home_logo as logo 
         FROM wp_football_matches 
         WHERE fixture_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)
         ORDER BY home_team ASC
@@ -831,16 +831,25 @@ router.post('/paypal/capture-order', authMiddleware, async (req, res) => {
     }
 
     const capture = await response.json();
+    console.log('[PAYPAL] Capture response:', JSON.stringify(capture, null, 2));
 
     if (capture.status === 'COMPLETED') {
-        const betId = capture.purchase_units[0].payments.captures[0].custom_id;
-        const paidAmount = parseFloat(capture.purchase_units[0].payments.captures[0].amount.value);
-        const payerEmail = capture.payer.email_address;
+        // Try multiple locations for custom_id
+        const betId = capture.purchase_units?.[0]?.payments?.captures?.[0]?.custom_id || 
+                      capture.purchase_units?.[0]?.custom_id;
+        
+        const paidAmount = parseFloat(capture.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value || "0");
+        const payerEmail = capture.payer?.email_address || 'N/D';
+
+        if (!betId) {
+            console.error('[PAYPAL] Missing custom_id (betId) in capture response');
+            throw new Error('Impossibile identificare la bet pagata');
+        }
 
         conn = await getConnection();
         await conn.beginTransaction();
 
-        // 1. Get bet info
+        console.log(`[PAYPAL] Processing payout for bet #${betId}, amount: ${paidAmount}`);
         const [betRows] = await conn.execute(`
           SELECT b.* FROM tp_saved_bets b WHERE b.id = ?
         `, [betId]);

@@ -61,7 +61,7 @@ export function Header() {
             <Link to="/schedine" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
               <ClipboardList className="h-4 w-4 text-primary" /> {t('nav.my_bets')}
             </Link>
-            {user && (user.gpBalance ?? 0) >= 10000 && (
+            {user && (
               <Link to="/wallet" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold bg-primary/10 text-primary transition-all hover:bg-primary/20 rounded-xl px-3 border border-primary/20">
                 <WalletIcon className="h-4 w-4" /> {t('nav.wallet')}
               </Link>
@@ -91,6 +91,11 @@ export function Header() {
               
               <div className="flex items-center gap-2 px-3 border-r border-border/50">
                 <span className="text-xs font-black text-primary">GP: {user.gpBalance ?? 0}</span>
+                {user.advisorBalance !== undefined && user.advisorBalance > 0 && (
+                  <span className="text-xs font-black text-green-500 ml-1">
+                    € {Number(user.advisorBalance).toFixed(2)}
+                  </span>
+                )}
               </div>
 
               <button 

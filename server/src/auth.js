@@ -70,6 +70,10 @@ export async function loginUser(email, password) {
       gpBalance = gp[0].balance;
     }
 
+    // NEW: Get Advisor Balance
+    const [adv] = await db.query('SELECT balance_euro FROM tp_advisor_wallets WHERE user_id = ?', [user.id]);
+    const advisorBalance = adv.length > 0 ? adv[0].balance_euro : 0;
+
     const token = jwt.sign(
       { userId: user.id, email, isAdmin: Boolean(user.is_admin) }, 
       JWT_SECRET, 
@@ -84,7 +88,8 @@ export async function loginUser(email, password) {
         email,
         email_verified: Boolean(user.email_verified),
         isAdmin: Boolean(user.is_admin),
-        gpBalance: gpBalance
+        gpBalance: gpBalance,
+        advisorBalance: advisorBalance
       }
     };
   } catch (error) {
@@ -127,7 +132,11 @@ export async function getCurrentUser(userId) {
       finalBalance = gp[0].balance;
     }
 
-    console.log(`[AUTH] User found: ${user.email}, balance: ${finalBalance}`);
+    // NEW: Get Advisor Balance
+    const [adv] = await db.query('SELECT balance_euro FROM tp_advisor_wallets WHERE user_id = ?', [userId]);
+    const advisorBalance = adv.length > 0 ? adv[0].balance_euro : 0;
+
+    console.log(`[AUTH] User found: ${user.email}, balance: ${finalBalance}, advisorBalance: ${advisorBalance}`);
     return {
       success: true,
       user: {
@@ -135,7 +144,8 @@ export async function getCurrentUser(userId) {
         email: user.email,
         isAdmin: Boolean(user.is_admin),
         email_verified: Boolean(user.email_verified),
-        gpBalance: finalBalance
+        gpBalance: finalBalance,
+        advisorBalance: advisorBalance
       }
     };
   } catch (error) {
