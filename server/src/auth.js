@@ -38,6 +38,16 @@ export function authMiddleware(req, res, next) {
   next();
 }
 
+export function adminMiddleware(req, res, next) {
+  authMiddleware(req, res, (err) => {
+    if (err) return next(err);
+    if (!req.isAdmin) {
+      return res.status(403).json({ success: false, error: 'Accesso negato: richiesti privilegi di amministratore' });
+    }
+    next();
+  });
+}
+
 export async function loginUser(email, password) {
   let db;
   try {

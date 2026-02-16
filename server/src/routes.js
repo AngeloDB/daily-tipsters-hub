@@ -1,6 +1,6 @@
 import express from 'express';
 import { getConnection } from './db.js';
-import { authMiddleware, loginUser, getCurrentUser, verifyToken } from './auth.js';
+import { authMiddleware, adminMiddleware, loginUser, getCurrentUser, verifyToken } from './auth.js';
 
 const router = express.Router();
 
@@ -1101,6 +1101,67 @@ router.get('/share/tipster/:id', async (req, res) => {
   } catch (error) {
     console.error('[SHARE] Error:', error);
     res.redirect('https://getprono.online');
+/**
+ * GET /api/admin/financial-stats
+ * Returns financial overview for admin panel
+ */
+router.get('/admin/financial-stats', adminMiddleware, async (req, res) => {
+  let conn;
+  try {
+    conn = await getConnection();
+
+    // 1. Global Totals
+    const [totals] = await conn.execute(`
+      SELECT 
+        (SELECT COALESCE(SUM(purchased_price), 0) FROM tp_bet_locks) as total_gross,
+        (SELECT COALESCE(SUM(balance_euro), 0) FROM tp_advisor_wallets) as total_advisor_balance,
+        (SELECT COALESCE(SUM(amount), 0) FROM tp_transactions WHERE type = 'sale' AND status = 'completed') as total_advisor_earned,
+        (SELECT COALESCE(SUM(amount), 0) FROM tp_transactions WHERE type = 'withdrawal' AND status = 'completed') as total_withdrawn
+    `);
+
+    // 2. Advisors stats (Grouping locks by the advisor who created the bet)
+    const [advisorStats] = await conn.execute(`
+      SELECT 
+        u.id as advisor_id,
+        u.email as advisor_email,
+        u.display_name,
+        COUNT(l.id) as total_sales_count,
+        COALESCE(SUM(l.purchased_price), 0) as gross_revenue,
+        COALESCE(SUM(l.purchased_price) * 0.5, 0) as expected_advisor_share,
+        COALESCE(w.balance_euro, 0) as current_wallet_balance
+      FROM wp_users u
+      JOIN tp_saved_bets b ON u.id = b.user_id
+      JOIN tp_bet_locks l ON b.id = l.bet_id
+      LEFT JOIN tp_advisor_wallets w ON u.id = w.user_id
+      GROUP BY u.id
+    `);
+
+    // 3. Recent Transactions with details
+    // We need to show: buyer email, amount (50%), advisor, etc.
+    const [transactions] = await conn.execute(`
+      SELECT 
+        t.id,
+        t.amount as advisor_amount,
+        t.type,
+        t.status,
+        t.payment_email as buyer_email,
+        t.created_at,
+        u.email as advisor_email
+      FROM tp_transactions t
+      JOIN wp_users u ON t.user_id = u.id
+      ORDER BY t.created_at DESC
+      LIMIT 100
+    `);
+
+    res.json({
+      success: true,
+      summary: totals[0],
+      advisors: advisorStats,
+      transactions: transactions
+    });
+  } catch (error) {
+    console.error('[ADMIN STATS] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
   } finally {
     if (conn) conn.release();
   }

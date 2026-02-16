@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ticket, ClipboardList, LogIn, UserPlus, Menu, X, Trophy, LogOut, User, Users, Wallet as WalletIcon } from "lucide-react";
+import { Ticket, ClipboardList, LogIn, UserPlus, Menu, X, Trophy, LogOut, User, Users, Wallet as WalletIcon, ShieldCheck } from "lucide-react";
 import { useBetslip } from "@/contexts/BetslipContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,11 @@ export function Header() {
             <Link to="/schedine" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
               <ClipboardList className="h-4 w-4 text-primary" /> {t('nav.my_bets')}
             </Link>
+            {user?.isAdmin && (
+              <Link to="/admin/finance" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 border border-destructive/20">
+                <ShieldCheck className="h-4 w-4" /> Admin
+              </Link>
+            )}
             {user && (
               <Link to="/wallet" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold bg-primary/10 text-primary transition-all hover:bg-primary/20 rounded-xl px-3 border border-primary/20">
                 <WalletIcon className="h-4 w-4" /> 
@@ -180,7 +185,12 @@ export function Header() {
             <Link to="/schedine" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg bg-secondary/50 px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary">
               <ClipboardList className="h-4 w-4 text-primary" /> {t('nav.my_bets')}
             </Link>
-            {user && (user.gpBalance ?? 0) >= 10000 && (
+            {user?.isAdmin && (
+              <Link to="/admin/finance" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm font-black text-destructive hover:bg-destructive/20">
+                <ShieldCheck className="h-4 w-4" /> Admin
+              </Link>
+            )}
+            {user && (
               <Link to="/wallet" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-4 py-3 text-sm font-black text-primary hover:bg-primary/20">
                 <WalletIcon className="h-4 w-4" /> {t('nav.wallet')}
               </Link>

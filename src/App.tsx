@@ -12,6 +12,7 @@ import SavedBets from "./pages/SavedBets";
 import Tipsters from "./pages/Tipsters";
 import TipsterBets from "./pages/TipsterBets";
 import Wallet from "./pages/Wallet";
+import AdminFinance from "./pages/AdminFinance";
 import Regolamento from "./pages/Regolamento";
 import Matches from "./pages/Matches";
 import NotFound from "./pages/NotFound";
@@ -34,6 +35,7 @@ const App = () => (
                   <Route path="/tipsters" element={<Tipsters />} />
                   <Route path="/tipster/:id" element={<TipsterBets />} />
                   <Route path="/wallet" element={<Wallet />} />
+                  <Route path="/admin/finance" element={<AdminFinance />} />
                   <Route path="/regolamento" element={<Regolamento />} />
                   <Route path="/partite" element={<Matches />} />
                   <Route path="*" element={<NotFound />} />
