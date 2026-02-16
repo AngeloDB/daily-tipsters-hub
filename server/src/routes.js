@@ -1053,16 +1053,14 @@ router.get('/share/tipster/:id', async (req, res) => {
     const tipsterId = req.params.id;
 
     const [rows] = await conn.execute(`
-      SELECT u.id, u.email, u.display_name, COALESCE(b.balance, 0) as balance
+      SELECT u.id, u.email, COALESCE(b.balance, 0) as balance
       FROM wp_users u
       LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
       WHERE u.id = ?
     `, [tipsterId]);
 
     const tipster = rows[0];
-    const name = tipster?.display_name && tipster.display_name.trim() !== '' 
-      ? tipster.display_name 
-      : (tipster?.email ? tipster.email.split('@')[0] : 'Tipster');
+    const name = tipster?.email ? tipster.email.split('@')[0] : 'Tipster';
     
     const balance = tipster ? Math.floor(tipster.balance) : 0;
     const title = balance >= 10000 
