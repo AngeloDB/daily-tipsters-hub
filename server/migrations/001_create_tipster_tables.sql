@@ -35,3 +35,34 @@ CREATE TABLE IF NOT EXISTS tp_saved_bet_selections (
     FOREIGN KEY (match_id) REFERENCES wp_football_matches(fixture_id) ON DELETE CASCADE
 );
 
+-- Bet Locks (Purchased bets)
+CREATE TABLE IF NOT EXISTS tp_bet_locks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    bet_id INT NOT NULL,
+    purchased_price DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES wp_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (bet_id) REFERENCES tp_saved_bets(id) ON DELETE CASCADE
+);
+
+-- Advisor Wallets (Euro balance from sales)
+CREATE TABLE IF NOT EXISTS tp_advisor_wallets (
+    user_id INT PRIMARY KEY,
+    balance_euro DECIMAL(10,2) DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES wp_users(id) ON DELETE CASCADE
+);
+
+-- Transactions (Euro withdrawals and sales)
+CREATE TABLE IF NOT EXISTS tp_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    type ENUM('sale', 'withdrawal') NOT NULL,
+    status ENUM('pending', 'completed', 'failed') DEFAULT 'completed',
+    payment_email VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES wp_users(id) ON DELETE CASCADE
+);
+
