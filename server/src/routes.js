@@ -1051,22 +1051,19 @@ router.get('/share/tipster/:id', async (req, res) => {
       WHERE u.id = ?
     `, [tipsterId]);
 
-    if (rows.length === 0) {
-      return res.redirect('https://getprono.online/tipsters');
-    }
-
     const tipster = rows[0];
-    // Se display_name è vuoto, usa l'email troncata
-    const name = tipster.display_name && tipster.display_name.trim() !== '' 
+    const name = tipster?.display_name && tipster.display_name.trim() !== '' 
       ? tipster.display_name 
-      : (tipster.email ? tipster.email.split('@')[0] : 'Tipster');
+      : (tipster?.email ? tipster.email.split('@')[0] : 'Tipster');
     
-    const balance = Math.floor(tipster.balance);
+    const balance = tipster ? Math.floor(tipster.balance) : 0;
     const title = balance >= 10000 
       ? `🏆 Segui ${name}, Advisor Certificato` 
       : `⚽ Pronostici di ${name} - Tipsters Race`;
     const description = `Saldo attuale: GP ${balance.toLocaleString()} | Unisciti alla Tipsters Race e segui le migliori schedine!`;
-    const redirectUrl = `https://getprono.online/tipster/${tipsterId}`;
+    const redirectUrl = tipster 
+      ? `https://getprono.online/tipster/${tipsterId}`
+      : `https://getprono.online/tipsters`;
     
     // Immagine di share dedicata (stabile in public)
     const imageUrl = "https://getprono.online/stadium-share.jpg";
@@ -1112,10 +1109,21 @@ router.get('/share/tipster/:id', async (req, res) => {
     `);
   } catch (error) {
     console.error('[SHARE] Error:', error);
-    res.redirect('https://getprono.online');
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta property="og:title" content="Tipsters Race" />
+          <meta property="og:image" content="https://getprono.online/stadium-share.jpg" />
+          <meta http-equiv="refresh" content="0; url=https://getprono.online" />
+        </head>
+        <body>Redirecting...</body>
+      </html>
+    `);
   } finally {
     if (conn) conn.release();
   }
+});
 });
 
 /**
