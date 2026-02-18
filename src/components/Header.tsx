@@ -76,6 +76,15 @@ export function Header() {
             <Link to="/schedine" onClick={() => trackCta('nav-my_bets')} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
               <ClipboardList className="h-4 w-4 text-primary" /> {t('nav.my_bets')}
             </Link>
+            <a 
+              href="https://getpronoservizi.it" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              onClick={() => trackCta('nav-magazine')}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary"
+            >
+              Magazine 📰
+            </a>
             {user?.isAdmin && (
               <Link to="/admin/finance" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 border border-destructive/20">
                 <ShieldCheck className="h-4 w-4" /> Admin
@@ -200,6 +209,15 @@ export function Header() {
             <Link to="/schedine" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg bg-secondary/50 px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary">
               <ClipboardList className="h-4 w-4 text-primary" /> {t('nav.my_bets')}
             </Link>
+            <a 
+              href="https://getpronoservizi.it" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              onClick={() => { trackCta('nav-magazine-mobile'); setMenuOpen(false); }}
+              className="flex items-center gap-2 rounded-lg bg-secondary/50 px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary"
+            >
+              Magazine 📰
+            </a>
             {user?.isAdmin && (
               <Link to="/admin/finance" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm font-black text-destructive hover:bg-destructive/20">
                 <ShieldCheck className="h-4 w-4" /> Admin
