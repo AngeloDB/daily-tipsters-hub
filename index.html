@@ -40,6 +40,17 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-TJLNQDQW');</script>
     <!-- End Google Tag Manager -->
+
+    <script>
+      // Global tracking helper
+      window.trackCta = function(label) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          'event': 'cta_click',
+          'cta_label': label
+        });
+      };
+    </script>
   </head>
 
   <body>

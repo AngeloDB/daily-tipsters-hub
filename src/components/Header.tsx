@@ -23,8 +23,23 @@ export function Header() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { t, i18n } = useTranslation();
 
+  const trackCta = (label: string) => {
+    if ((window as any).trackCta) {
+      (window as any).trackCta(label);
+    }
+  };
+
   const changeLanguage = (code: string) => {
     i18n.changeLanguage(code);
+    
+    // GTM Elite Tracking
+    if ((window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        'event': 'language_change',
+        'selected_language': code
+      });
+    }
+
     setMenuOpen(false);
   };
 
@@ -52,13 +67,13 @@ export function Header() {
         {/* Desktop nav */}
         <div className="hidden lg:flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Link to="/regolamento" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
+            <Link to="/regolamento" onClick={() => trackCta('nav-rules')} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
               <Trophy className="h-4 w-4 text-primary" /> {t('nav.regolamento')}
             </Link>
-            <Link to="/tipsters" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
+            <Link to="/tipsters" onClick={() => trackCta('nav-tipsters')} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
               <Users className="h-4 w-4 text-primary" /> {t('nav.tipsters')}
             </Link>
-            <Link to="/schedine" className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
+            <Link to="/schedine" onClick={() => trackCta('nav-my_bets')} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary">
               <ClipboardList className="h-4 w-4 text-primary" /> {t('nav.my_bets')}
             </Link>
             {user?.isAdmin && (
