@@ -13,7 +13,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-admin}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-daily_match_hub}
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-tLeF06esF48k3I2tE4cinNx6PJ9XIwVXZ3uElCfKtXi}
       PORT: 4001
     networks:
       - daily-match-hub_app-network

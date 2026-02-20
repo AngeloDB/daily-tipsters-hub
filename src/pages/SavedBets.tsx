@@ -28,7 +28,7 @@ export default function SavedBetsPage() {
 
   const isProd = window.location.hostname !== 'localhost';
   const baseUrl = isProd ? 'https://getprono.online' : 'http://localhost:8081';
-  const userProfileUrl = user?.id ? `${baseUrl}/tipsters/${user.id}` : baseUrl;
+  const userProfileUrl = user?.id ? `${baseUrl}/tipster/${user.id}` : baseUrl;
 
   useEffect(() => {
     // Auto refresh every 2 minutes
@@ -90,7 +90,7 @@ function BetCard({ bet, onDelete }: { bet: SavedBet; onDelete: (id: any) => void
 
   const isProd = window.location.hostname !== 'localhost';
   const baseUrl = isProd ? 'https://getprono.online' : 'http://localhost:8081';
-  const userProfileUrl = user?.id ? `${baseUrl}/tipsters/${user.id}` : baseUrl;
+  const userProfileUrl = user?.id ? `${baseUrl}/tipster/${user.id}` : baseUrl;
   const shareRedirectUrl = (isProd && user?.id) ? `https://getprono.online/share/tipster/${user.id}` : userProfileUrl;
 
   const statusColors = {
