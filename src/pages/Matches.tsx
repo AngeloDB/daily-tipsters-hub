@@ -82,9 +82,10 @@ export default function Matches() {
         fetchMatches();
     }, []);
 
-    // Group matches by league
+    // Group matches by league and country to avoid name collisions (e.g., Premier League in different countries)
     const groupedMatches = matches.reduce((acc, match) => {
-        const leagueKey = `${match.league_name}`; // Could use ID but name is good for display
+        // Unique key using country and league name to correctly group matches
+        const leagueKey = `${match.league_country}_${match.league_name}`;
         if (!acc[leagueKey]) {
             acc[leagueKey] = {
                 name: match.league_name,
