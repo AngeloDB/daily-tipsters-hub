@@ -128,7 +128,10 @@ router.get('/matches', async (req, res) => {
     // and HAVE at least one odd in wp_flfe_odds for bookmaker 8
     const [matches] = await conn.execute(`
       SELECT m.*, 
-             COALESCE(l.priority, m.priority, 1000) as current_priority
+             COALESCE(l.priority, m.priority, 1000) as current_priority,
+             IF(m.league_name = 'Premier League' AND m.league_country != 'England', 
+                CONCAT(m.league_name, ' (', m.league_country, ')'), 
+                m.league_name) as display_league_name
       FROM wp_football_matches m
       LEFT JOIN wp_football_league_priority l ON m.league_id = l.league_id
       WHERE m.status = 'NS'
@@ -139,6 +142,7 @@ router.get('/matches', async (req, res) => {
           AND bookmaker_id = 8
           AND odd > 0
         )
+      GROUP BY m.fixture_id
       ORDER BY current_priority ASC, m.fixture_date ASC
     `);
 
@@ -174,6 +178,7 @@ router.get('/matches', async (req, res) => {
       const rawOdds = oddsMap[String(m.fixture_id)] || {};
       return {
         ...m,
+        league_name: m.display_league_name,
         fixture_date: formatDateToItalyNoTZ(m.fixture_date),
         priority: m.current_priority,
         normalized_odds: normalizeOdds(rawOdds)
