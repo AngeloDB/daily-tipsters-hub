@@ -25,6 +25,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', server: 'Tipsters Hub API', timestamp: new Date() });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Tipsters Hub Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Tipsters Hub Server running on port ${PORT}`);
 });

@@ -120,30 +120,30 @@ router.get('/auth/me', authMiddleware, async (req, res) => {
  * Gets all matches for today with their odds
  */
 router.get('/matches', async (req, res) => {
+  console.log('[API] GET /matches requested');
   let conn;
   try {
     conn = await getConnection();
     
-    // Query matches for today/future that are Not Started (NS) 
+    // Query matches for today that are Not Started (NS) 
     // and HAVE at least one odd in wp_flfe_odds for bookmaker 8
     const [matches] = await conn.execute(`
       SELECT m.*, 
-             COALESCE(l.priority, m.priority, 1000) as current_priority,
+             COALESCE(l.priority, 1000) as priority,
              IF(m.league_name = 'Premier League' AND m.league_country != 'England', 
                 CONCAT(m.league_name, ' (', m.league_country, ')'), 
                 m.league_name) as display_league_name
       FROM wp_football_matches m
       LEFT JOIN wp_football_league_priority l ON m.league_id = l.league_id
-      WHERE m.status = 'NS'
-        AND DATE(m.fixture_date) >= CURDATE()
+      WHERE DATE(m.fixture_date) = CURDATE()
+        AND m.status = 'NS'
         AND EXISTS (
           SELECT 1 FROM wp_flfe_odds 
           WHERE match_id = m.fixture_id 
           AND bookmaker_id = 8
           AND odd > 0
         )
-      GROUP BY m.fixture_id
-      ORDER BY current_priority ASC, m.fixture_date ASC
+      ORDER BY priority ASC, m.fixture_date ASC
     `);
 
     // Fetch odds for these matches
@@ -180,7 +180,7 @@ router.get('/matches', async (req, res) => {
         ...m,
         league_name: m.display_league_name,
         fixture_date: formatDateToItalyNoTZ(m.fixture_date),
-        priority: m.current_priority,
+        priority: m.priority,
         normalized_odds: normalizeOdds(rawOdds)
       };
     });
