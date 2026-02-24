@@ -275,10 +275,13 @@ router.get('/saved-bets', authMiddleware, async (req, res) => {
       // If the bet is WON and NOT YET SETTLED, pay the user and mark as settled
       if (status === 'WON' && b.is_settled === 0) {
         try {
-          // Pay the user
+          // Pay the user (Potential win + 100 GP Bonus per winning bet)
+          const bonus = 100;
+          const totalPay = Number(b.potential_win) + bonus;
+
           await conn.execute(
             'UPDATE wp_user_gp_balance SET balance = balance + ? WHERE user_id = ?',
-            [b.potential_win, req.userId]
+            [totalPay, req.userId]
           );
           // Mark as settled
           await conn.execute(
@@ -287,8 +290,9 @@ router.get('/saved-bets', authMiddleware, async (req, res) => {
           );
           // Update local object for response
           b.is_settled = 1;
+          console.log(`[SETTLEMENT] Bet ${b.id} won by user ${req.userId}. Paid ${totalPay} GP (includes ${bonus} GP bonus)`);
         } catch (payError) {
-          console.error(`Error settling bet ${b.id}:`, payError);
+          console.error(`[SETTLEMENT] Error settling bet ${b.id}:`, payError);
         }
       }
 
