@@ -489,6 +489,7 @@ router.get('/data/teams', async (req, res) => {
  * Get all users who are active (GP balance or bets)
  */
 router.get('/tipsters', async (req, res) => {
+  console.log('[TIPSTERS] GET /api/tipsters requested');
   let conn;
   try {
     conn = await getConnection();
@@ -497,31 +498,36 @@ router.get('/tipsters', async (req, res) => {
           u.id, 
           u.email,
           COALESCE(b.balance, 0) as balance,
-          (SELECT COUNT(*) FROM tp_saved_bets WHERE user_id = u.id) as total_bets
+          (SELECT COUNT(id) FROM tp_saved_bets WHERE user_id = u.id) as total_bets
       FROM wp_users u
       LEFT JOIN wp_user_gp_balance b ON u.id = b.user_id
+      WHERE u.email IS NOT NULL AND u.email != ''
       ORDER BY balance DESC, total_bets DESC
       LIMIT 100
     `);
 
+    console.log(`[TIPSTERS] Database returned ${rows.length} rows`);
+
     const data = rows.map(r => {
       // Use email as display name (truncate it)
       const name = r.email ? r.email.split('@')[0] : 'Tipster';
+      const balance = Number(r.balance) || 0;
+      const total_bets = Number(r.total_bets) || 0;
       
       return {
         id: r.id,
         displayName: name,
-        balance: Number(r.balance) || 0,
-        total_bets: Number(r.total_bets || 0),
-        isAdvisor: (Number(r.balance) || 0) >= 10000
+        balance: balance,
+        total_bets: total_bets,
+        isAdvisor: balance >= 10000
       };
     });
 
-    console.log(`[API] Found ${data.length} tipsters for community`);
+    console.log(`[TIPSTERS] Sending ${data.length} tipsters to frontend`);
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[API] Error in /tipsters:', error);
-    res.status(500).json({ success: false, error: 'Database error occurred' });
+    console.error('[TIPSTERS] Error in /tipsters route:', error);
+    res.status(500).json({ success: false, error: 'Database error occurred: ' + error.message });
   } finally {
     if (conn) conn.release();
   }
