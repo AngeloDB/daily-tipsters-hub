@@ -38,14 +38,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      // If we have a token in the URL, clean the URL
+      // 1. First, check URL for token and SAVE it to localStorage immediately if found
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('token')) {
+      const urlToken = urlParams.get('token');
+      
+      let effectiveToken = token;
+      
+      if (urlToken) {
+        console.log("[Auth] Found token in URL, updating state and localStorage");
+        effectiveToken = urlToken;
+        setToken(urlToken);
+        localStorage.setItem("tipster_auth_token", urlToken);
+        
+        // Clean the URL WITHOUT triggering a re-render yet
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      const effectiveToken = token;
-      
       console.log("[Auth] Initializing with token:", effectiveToken ? effectiveToken.substring(0, 10) + "..." : "none");
 
       if (effectiveToken) {
