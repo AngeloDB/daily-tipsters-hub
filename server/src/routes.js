@@ -1259,8 +1259,8 @@ router.get('/tipsters/sitemap.xml', async (req, res) => {
   </url>`;
     });
 
-    xml += \`
-</urlset>\`;
+    xml += `
+</urlset>`;
 
     res.header('Content-Type', 'application/xml');
     res.send(xml);
