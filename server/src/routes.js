@@ -1239,24 +1239,24 @@ router.get('/tipsters/sitemap.xml', async (req, res) => {
     const baseUrl = 'https://getprono.online';
     const now = new Date().toISOString();
 
-    let xml = \`<?xml version="1.0" encoding="UTF-8"?>
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>\${baseUrl}/</loc>
-    <lastmod>\${now}</lastmod>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${now}</lastmod>
     <changefreq>always</changefreq>
     <priority>1.0</priority>
-  </url>\`;
+  </url>`;
 
     // Add Tipster detail pages
     tipsters.forEach(t => {
-      xml += \`
+      xml += `
   <url>
-    <loc>\${baseUrl}/tipster/\${t.id}</loc>
-    <lastmod>\${now}</lastmod>
+    <loc>${baseUrl}/tipster/${t.id}</loc>
+    <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>\`;
+  </url>`;
     });
 
     xml += \`
