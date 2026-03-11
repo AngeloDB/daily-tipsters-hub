@@ -1219,4 +1219,57 @@ router.get('/admin/financial-stats', adminMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/tipsters/sitemap.xml
+ * Dynamic sitemap for Tipsters Hub
+ */
+router.get('/tipsters/sitemap.xml', async (req, res) => {
+  let conn;
+  try {
+    conn = await getConnection();
+    
+    // 1. Get all active Tipsters (users who have at least one saved bet)
+    const [tipsters] = await conn.execute(`
+      SELECT DISTINCT u.id, u.email as nickname
+      FROM wp_users u
+      JOIN tp_saved_bets b ON u.id = b.user_id
+      ORDER BY u.id DESC
+    `);
+
+    const baseUrl = 'https://getprono.online';
+    const now = new Date().toISOString();
+
+    let xml = \`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>\${baseUrl}/</loc>
+    <lastmod>\${now}</lastmod>
+    <changefreq>always</changefreq>
+    <priority>1.0</priority>
+  </url>\`;
+
+    // Add Tipster detail pages
+    tipsters.forEach(t => {
+      xml += \`
+  <url>
+    <loc>\${baseUrl}/tipster/\${t.id}</loc>
+    <lastmod>\${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>\`;
+    });
+
+    xml += \`
+</urlset>\`;
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error('Sitemap error:', error);
+    res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><error>Internal Server Error</error>');
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 export default router;
