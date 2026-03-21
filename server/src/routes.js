@@ -143,6 +143,7 @@ router.get('/matches', async (req, res) => {
           AND bookmaker_id = 8
           AND odd > 0
         )
+      GROUP BY m.fixture_id, m.league_country
       ORDER BY priority ASC, m.fixture_date ASC
     `);
 
@@ -405,6 +406,7 @@ router.get('/matches/date/:date', async (req, res) => {
           AND bookmaker_id = 8
           AND odd > 0
         )
+      GROUP BY m.fixture_id, m.league_country
       ORDER BY current_priority ASC, m.fixture_date ASC
     `, [date]);
 
