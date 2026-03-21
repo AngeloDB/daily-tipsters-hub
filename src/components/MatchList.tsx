@@ -121,7 +121,7 @@ export function MatchList() {
                   const key = `${league.name}|${league.country || ''}`;
                   return (
                     <SelectItem key={key} value={key}>
-                      {league.name} {league.country ? `(${league.country})` : ''}
+                      {league.name}
                     </SelectItem>
                   );
                 })}
