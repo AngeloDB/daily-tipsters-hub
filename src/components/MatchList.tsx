@@ -138,10 +138,10 @@ export function MatchList() {
       </div>
 
       <div className="space-y-5">
-        {sortedLeagues.map(([league, matches]) => (
+        {sortedLeagues.map(([leagueKey, matches]) => (
           <LeagueSection
-            key={league}
-            league={league}
+            key={leagueKey}
+            league={leagueKey.split('|')[0]}
             country={matches[0]?.leagueCountry}
             flag={matches[0]?.leagueFlag}
             matchCount={matches.length}
