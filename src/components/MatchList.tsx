@@ -20,16 +20,22 @@ export function MatchList() {
   const [selectedLeague, setSelectedLeague] = useState("all");
 
   const leagueOptions = useMemo(() => {
-    const leaguesMap = new Map<string, { name: string, priority: number }>();
+    const leaguesMap = new Map<string, { name: string, country?: string, priority: number }>();
     matches.forEach(m => {
-      if (!leaguesMap.has(m.league)) {
-        leaguesMap.set(m.league, { name: m.league, priority: m.priority });
+      const key = `${m.league}|${m.leagueCountry || ''}`;
+      if (!leaguesMap.has(key)) {
+        leaguesMap.set(key, { 
+          name: m.league, 
+          country: m.leagueCountry,
+          priority: m.priority 
+        });
       }
     });
 
     return Array.from(leaguesMap.values()).sort((a, b) => {
       if (a.priority !== b.priority) return a.priority - b.priority;
-      return a.name.localeCompare(b.name);
+      if (a.name !== b.name) return a.name.localeCompare(b.name);
+      return (a.country || '').localeCompare(b.country || '');
     });
   }, [matches]);
 
@@ -40,7 +46,8 @@ export function MatchList() {
         match.awayTeam.toLowerCase().includes(searchTerm.toLowerCase()) ||
         match.league.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesLeague = selectedLeague === "all" || match.league === selectedLeague;
+      const leagueKey = `${match.league}|${match.leagueCountry || ''}`;
+      const matchesLeague = selectedLeague === "all" || leagueKey === selectedLeague;
 
       return matchesSearch && matchesLeague;
     });
@@ -49,10 +56,11 @@ export function MatchList() {
   const matchesByLeague = useMemo(() => {
     const grouped: Record<string, any[]> = {};
     filteredMatches.forEach((match) => {
-      if (!grouped[match.league]) {
-        grouped[match.league] = [];
+      const key = `${match.league}|${match.leagueCountry || ''}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
       }
-      grouped[match.league].push(match);
+      grouped[key].push(match);
     });
     return grouped;
   }, [filteredMatches]);
@@ -109,11 +117,14 @@ export function MatchList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('home.all_leagues')}</SelectItem>
-                {leagueOptions.map((league) => (
-                  <SelectItem key={league.name} value={league.name}>
-                    {league.name}
-                  </SelectItem>
-                ))}
+                {leagueOptions.map((league) => {
+                  const key = `${league.name}|${league.country || ''}`;
+                  return (
+                    <SelectItem key={key} value={key}>
+                      {league.name} {league.country ? `(${league.country})` : ''}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
